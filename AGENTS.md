@@ -177,7 +177,10 @@ tsc --noEmit）、`python -m py_compile scripts/*.py`（watchdog 改动，另需
 3. 任何新增的批量拉取 / 下载类脚本沿用同样模式，先报量再动手。
 4. 账号资料富集沿用同一纪律：每运行最多 `WATCH_ENRICH_CAP`（默认 40，
    上限 200）个账号、GraphQL 单查询批 `GQL_BATCH = 40` 个别名、
-   `ENRICH_STALE_DAYS = 30` 天的刷新窗口；富集失败只降级不阻塞快照。
+   `WATCH_ENRICH_STALE_DAYS`（默认 30）天的刷新窗口；富集失败只降级不阻塞快照。
+5. 检查节流：`WATCH_INTERVAL_HOURS`（默认 1，上限 168）只对定时触发生效
+   —— 非到期时段秒退且不产生任何 API 调用；手动 dispatch 与 master push
+   永不节流（workflow 只在 schedule 事件设 `WATCH_SCHEDULED=true`）。
 
 ## 10. 与 wowsp AGENTS.md 的差异记录
 

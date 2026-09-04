@@ -60,6 +60,17 @@ WATCH_ENRICH_CAP=200 just watch        # relancez jusqu'à voir « no changes »
 
 Commituez ensuite les relevés `data/` produits sur une branche, ouvrez une PR et fusionnez-la — la prochaine exécution horaire adopte le fichier et ne rafraîchit que ce qui a vieilli.
 
+**Ajuster la cadence (économiser le quota CI).** Le cron déclenche chaque heure, mais tous les réglages qui décident de ce qui tourne réellement sont de simples variables de dépôt — à définir une fois dans **Settings → Secrets and variables → Actions → Variables** (`vars.*`), sans toucher au workflow :
+
+| Variable | Défaut | Signification |
+| --- | --- | --- |
+| `WATCH_INTERVAL_HOURS` | `1` | Heures minimales entre deux vérifications planifiées. Avec `6`, les heures intermédiaires se terminent en quelques secondes sans toucher l'API — aucun relevé, aucun build, aucun déploiement. Les exécutions manuelles **Run workflow** vérifient toujours immédiatement. |
+| `WATCH_ENRICH_CAP` | `40` | Comptes profilés par exécution (max 200 ; le champ Run workflow prime). |
+| `WATCH_ENRICH_STALE_DAYS` | `30` | Jours avant le rafraîchissement des faits d'un abonné. |
+| `WATCH_USER` | owner du fork | Surveiller n'importe quel autre compte public. |
+
+Par exemple, `WATCH_INTERVAL_HOURS=6` réduit d'environ 83 % le trafic API planifié tandis que la tendance, la chronologie et les scores restent à jour quatre fois par jour.
+
 **Où vivent les données.** `data/current.json` est la liste à jour, `data/history.jsonl` le journal en ajout seul des abonnements/désabonnements, et `data/accounts.json` les faits par compte derrière les scores. Tout trois sont écrits par la CI seule et committés dans votre fork — `git log -- data/` est la piste d'audit complète : aucun service externe, aucune base de données, rien d'autre à confiance que git.
 
 **Surveiller quelqu'un d'autre.** Définissez `WATCH_USER` dans `.github/workflows/watch.yml` (ou passez le compte en argument à `just watch <login>` localement) pour surveiller n'importe quel compte public à la place du vôtre.

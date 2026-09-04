@@ -60,6 +60,17 @@ WATCH_ENRICH_CAP=200 just watch        # rerun until it reports "no changes"
 
 Then commit the produced `data/` records on a branch, open a PR and merge it — the next hourly run adopts the file and only refreshes what went stale.
 
+**Tuning the cadence (saving CI quota).** The cron fires hourly, but every knob that decides how much actually runs is a plain repository variable — set once under **Settings → Secrets and variables → Actions → Variables** (`vars.*`), no workflow edits needed:
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `WATCH_INTERVAL_HOURS` | `1` | Minimum hours between scheduled checks. With `6`, the hours in between exit in seconds without touching the API — no records, no build, no deploy. Manual **Run workflow** runs always check immediately. |
+| `WATCH_ENRICH_CAP` | `40` | Accounts profiled per run (max 200; the Run-workflow input overrides it). |
+| `WATCH_ENRICH_STALE_DAYS` | `30` | Days before a follower's profile facts get refreshed. |
+| `WATCH_USER` | fork owner | Watch any other public account instead of yourself. |
+
+`WATCH_INTERVAL_HOURS=6`, for example, cuts scheduled API traffic by roughly 83% while the trend, timeline and scores stay current four times a day.
+
 **Where the data lives.** `data/current.json` is the latest roster, `data/history.jsonl` is the append-only follow/unfollow log, and `data/accounts.json` holds the per-follower facts behind the scores. All three are written only by CI and committed to your fork, so `git log -- data/` is the complete audit trail — no external service, no database, nothing to trust but git.
 
 **Watching someone else.** Set `WATCH_USER` in `.github/workflows/watch.yml` (or pass the account as the `just watch <login>` argument locally) to monitor any public account instead of your own.

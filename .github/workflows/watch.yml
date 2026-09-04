@@ -41,7 +41,16 @@ jobs:
       - name: Run the watchdog
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WATCH_ENRICH_CAP: ${{ github.event.inputs.enrich-cap || '40' }}
+          # All cadence knobs are plain repository variables (Settings →
+          # Secrets and variables → Actions → Variables) so a fork tunes
+          # them without editing the workflow; every value has a default.
+          WATCH_USER: ${{ vars.WATCH_USER }}
+          WATCH_ENRICH_CAP: ${{ github.event.inputs.enrich-cap || vars.WATCH_ENRICH_CAP || '40' }}
+          WATCH_ENRICH_STALE_DAYS: ${{ vars.WATCH_ENRICH_STALE_DAYS || '30' }}
+          # The interval gate only throttles the hourly schedule — manual
+          # dispatches and master pushes always run in full.
+          WATCH_SCHEDULED: ${{ github.event_name == 'schedule' }}
+          WATCH_INTERVAL_HOURS: ${{ vars.WATCH_INTERVAL_HOURS || '1' }}
         run: python3 scripts/watchdog.py
 
       - name: Detect record changes
