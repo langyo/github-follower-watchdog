@@ -35,6 +35,26 @@ export default {
   },
   followers: {
     title: "当前关注者",
+    assessed: "已评估 {assessed} / {total} 个账号",
+    emptyGroup: "该分组下暂无关注者",
+    groups: {
+      all: "全部",
+      real: "真人",
+      uncertain: "存疑",
+      suspect: "疑似机器人",
+      unassessed: "未评估",
+    },
+    tip: {
+      score: "评分",
+      contribs: "贡献数（近一年）",
+      repos: "公开仓库",
+      following: "正在关注",
+      followers: "关注者",
+      since: "注册于",
+      unknown: "未知",
+      nofacts: "尚未评估 —— 资料会逐步收集",
+      missing: "该账号已从 GitHub 注销",
+    },
   },
   states: {
     loading: "正在读取巡检记录……",

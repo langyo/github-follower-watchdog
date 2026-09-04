@@ -35,6 +35,26 @@ export default {
   },
   followers: {
     title: "Текущие подписчики",
+    assessed: "Оценено {assessed} из {total}",
+    emptyGroup: "В этой группе подписчиков нет",
+    groups: {
+      all: "Все",
+      real: "Люди",
+      uncertain: "Сомнительные",
+      suspect: "Похожи на ботов",
+      unassessed: "Не оценены",
+    },
+    tip: {
+      score: "Балл",
+      contribs: "Вклад (за год)",
+      repos: "Открытые репозитории",
+      following: "Подписки",
+      followers: "Подписчики",
+      since: "С нами",
+      unknown: "неизвестно",
+      nofacts: "Ещё не оценён — данные собираются постепенно",
+      missing: "Аккаунт больше не существует на GitHub",
+    },
   },
   states: {
     loading: "Загрузка записей наблюдения…",

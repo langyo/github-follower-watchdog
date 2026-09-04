@@ -35,6 +35,26 @@ export default {
   },
   followers: {
     title: "Seguidores actuales",
+    assessed: "{assessed} de {total} cuentas evaluadas",
+    emptyGroup: "No hay seguidores en este grupo",
+    groups: {
+      all: "Todos",
+      real: "Reales",
+      uncertain: "Dudosos",
+      suspect: "Sospechosos",
+      unassessed: "Sin evaluar",
+    },
+    tip: {
+      score: "Puntuación",
+      contribs: "Contribuciones (1 año)",
+      repos: "Repos públicos",
+      following: "Siguiendo",
+      followers: "Seguidores",
+      since: "Se unió",
+      unknown: "desconocido",
+      nofacts: "Aún sin evaluar — los datos se recogen poco a poco",
+      missing: "Esta cuenta ya no existe en GitHub",
+    },
   },
   states: {
     loading: "Obteniendo los registros…",

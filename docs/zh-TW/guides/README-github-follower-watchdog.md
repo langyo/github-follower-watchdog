@@ -31,25 +31,50 @@ GitHub Follower Watchdog 是一個完全活在倉庫裡的零伺服器關注者�
 
 3. **Pages 發布儀表板** —— 每次變動自動重新部署單頁儀表板（Vue 3 · TSX · SCSS · vue-i18n，8 種語言，深淺雙主題），展示關注數趨勢、關注/取關時間軸與目前名單。
 
-Fork 之後它就**屬於你**：被監看帳號從倉庫 owner 自動解析，繼承的記錄在 fork 首次執行時重置，同一個 workflow 還會為 fork 自動開啟並部署 GitHub Pages。前端架構、建構設施與倉庫規範改編自 [wowsp](https://github.com/langyo/wowsp)。
+在原始清單之上，watchdog 會在嚴格的 API 限額預算內**為每位關注者建立資料畫像**（貢獻量、關注/粉絲比、公開儲存庫數、資料完整度、帳號年齡），儀表板把這些事實換算成一個透明可解釋的 0–100 分，用來區分真人關注與疑似批量關注機器人。
+
+Fork 之後它就**屬於你**：被監看帳號從倉庫 owner 自動解析，繼承的記錄在 fork 首次執行時重置，同一個 workflow 還會為 fork 自動開啟並部署 GitHub Pages。
 
 ## 快速開始
 
-1. Fork 本倉庫。
-2. 在你的 fork 上啟用 **Actions** —— GitHub 預設關閉新 fork 的 workflow（倉庫 → Actions → "I understand my workflows, go ahead and enable them"）。
-3. 透過 **Run workflow** 手動觸發一次 **Watch** workflow —— 首次執行會把你目前的關注者記錄為基線，並發布你的 Pages 站台。
-4. 開啟 `https://<你>.github.io/github-follower-watchdog/` —— 此後它每小時自動重新整理。
+Fork 之後照做，全程約兩分鐘。
 
-如果首次執行在 *Configure Pages* 一步失敗 —— GitHub 偶爾會拒絕讓 workflow 權杖建立站台 —— 只需在 **Settings → Pages → Source: GitHub Actions** 手動啟用一次，再重新執行 workflow 即可。
+1. **Fork 本倉庫** —— 名字隨意；下文假設你保留了 `github-follower-watchdog`。
 
-想監看其他公開帳號，在 `.github/workflows/watch.yml` 裡設定 `WATCH_USER` 即可。
+2. **在 fork 上啟用 Actions** —— 瀏覽器開啟 `https://github.com/<你>/github-follower-watchdog/actions`。GitHub 預設關閉新 fork 的 workflow，點擊 **I understand my workflows, go ahead and enable them**。
+
+3. **跑第一次巡檢** —— 還是在這個 Actions 頁面，左側選 **Watch** → **Run workflow** → **Run workflow**。（想更快填滿真人/機器人評分，可以把這裡的 *Max accounts to enrich* 調大。）首次執行會把目前關注者記錄為基線，並發布你的站台。
+
+4. **開啟你的儀表板** —— `https://<你>.github.io/github-follower-watchdog/`。此後每小時自動重新整理（僅在資料有變化時重新部署）。
+
+如果首次執行在 *Configure Pages* 一步停下 —— GitHub 偶爾會拒絕讓 workflow 權杖建立站台 —— 開啟 `https://github.com/<你>/github-follower-watchdog/settings/pages`，把 **Source** 設為 **GitHub Actions**，再跑一次 **Watch** 即可。
+
+**資料存在哪裡。** `data/current.json` 是最新名單，`data/history.jsonl` 是只增不改的關注/取關日誌，`data/accounts.json` 存放評分背後的帳號事實。三者都只由 CI 寫入並提交到你的 fork —— `git log -- data/` 就是完整的審計線：沒有外部服務、沒有資料庫，只需要信任 git。
+
+**監看別人。** 在 `.github/workflows/watch.yml` 裡設定 `WATCH_USER`（或在本地 `just watch <登入名>` 傳參），即可監看任意公開帳號。
 
 ## 工作原理
 
-- `scripts/watchdog.py` —— 抓取器的全部：有界分頁、原子寫入、先寫快照後寫歷史的順序（崩潰最多丟一條時間軸，絕不重複事件），以及任何 API 失敗都「不寫任何資料」的鐵律。
-- `data/current.json` + `data/history.jsonl` —— 記錄本體；**只由 CI 寫入**（AGENTS.md §5），每次變動 = 一次附加 + 一次提交。
-- `.github/workflows/watch.yml` —— 每小時 cron + 手動 + push：watchdog → 有變動則提交 → 建構站點 → 部署 Pages。無變動的小時跳過建構，~20 秒收工；有變動的路徑也穩穩控制在一分鐘內。（GitHub 會在倉庫 60 天無活動後停用排程任務 —— 資料提交本身就是活動。）
-- `site/` —— 儀表板。Vite + Vue 3 TSX（無 `.vue` SFC）+ SCSS + vue-i18n，沿用 wowsp website 架構。記錄以公共資源形式原樣拷貝進建構產物、由頁面執行時拉取，因此純資料變動永遠不需要重新建構應用。
+- `scripts/watchdog.py` —— 抓取器的全部：有界分頁、原子寫入、先寫快照後寫歷史的順序（崩潰最多丟一條時間軸，絕不重複事件），以及任何 API 失敗都「不寫任何資料」的鐵律。第二階段為盡力而為的資料富集：每次執行最多處理 `WATCH_ENRICH_CAP`（預設 40，上限 200）個帳號，走 REST 使用者介面加一次批次 GraphQL 查詢，只有事實變化才落盤。
+- `data/current.json` + `data/history.jsonl` + `data/accounts.json` —— 記錄本體；**只由 CI 寫入**（AGENTS.md §5）。
+- `.github/workflows/watch.yml` —— 每小時 cron + 手動 + push：watchdog → 有變動則提交 → 建構站點 → 部署 Pages。無變動的小時跳過建構，~20 秒收工；有變動的路徑約一分鐘。（GitHub 會在倉庫 60 天無活動後停用排程任務 —— 資料提交本身就是活動。）
+- `site/` —— 儀表板。Vite + Vue 3 TSX（無 `.vue` SFC）+ SCSS + vue-i18n，8 種語言。記錄以公共資源形式原樣拷貝進建構產物、由頁面執行時拉取，純資料變動永遠不需要重新建構應用；評分完全在瀏覽器端計算（`site/src/data/scoring.ts`）。
+
+## 評分模型
+
+評分刻意做到可解釋 —— 先按經典真人訊號加分，再對經典機器人形態做乘法懲罰：
+
+| 訊號 | 分值 |
+| --- | --- |
+| 關注/粉絲平衡（0 關注，或比例 ≤ 2） | 至多 +25 |
+| 近一年貢獻數（GraphQL） | 至多 +30 |
+| 公開儲存庫數 | 至多 +15 |
+| 資料完整度（名字、簡介、公司、位置、部落格） | 至多 +10 |
+| 帳號年齡 | 至多 +15 |
+| 批次關注形態（關注 ≥ 500 且粉絲 < 50） | × 0.5 |
+| 空殼形態（無貢獻且無儲存庫） | × 0.6 |
+
+儀表板可按 **真人**（≥ 60）、**存疑**（30–59）、**疑似機器人**（< 30）三組篩選。資料按隨機抽樣逐步重新整理（每小時約 40 個帳號），畫像持續保鮮又絕不觸碰限額。
 
 ## 本地開發
 
@@ -61,14 +86,10 @@ just build                  # 類型檢查 + 生產建構
 just lint-msg               # 校驗 master..HEAD 的 commit 標題（AGENTS.md §1）
 ```
 
-本地 `GITHUB_TOKEN` 可選 —— 它把 API 限額從每小時 60 次提升到 5000 次。
+單純查關注者清單時 `GITHUB_TOKEN` 可選，但帳號富集（也就是評分）只在環境裡有 token 時才會執行 —— `export GITHUB_TOKEN=$(gh auth token)`。
 
 ## 文件
 
 各語言 README 位於 [`docs/`](../../)（`docs/<lang>/guides/README-github-follower-watchdog.md`，除英文外共 8 種）。面向 AI agent 與人類貢獻者的倉庫規則見 [`AGENTS.md`](../../../AGENTS.md)。
 
 原始碼：[langyo/github-follower-watchdog](https://github.com/langyo/github-follower-watchdog)。
-
-## 狀態
-
-🎉 **就緒** —— 每小時巡檢、git 留痕歷史與 Pages 儀表板均已上線；workflow 還會為新的 fork 自動開啟 Pages。路線圖刻意保持簡短：更多頁面語言、以及基於 webhook 的即時模式，是清單上僅有的兩個想法。

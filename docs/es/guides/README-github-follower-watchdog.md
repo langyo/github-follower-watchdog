@@ -31,25 +31,50 @@ GitHub Follower Watchdog es un monitor de seguidores sin servidor que vive por c
 
 3. **Panel publicado en Pages** — cada cambio redespliega un panel de una sola página (Vue 3 · TSX · SCSS · vue-i18n, 8 idiomas, oscuro y claro) que muestra la tendencia del número de seguidores, la cronología de follows/unfollows y la lista actual.
 
-Haz fork y pasa a ser **tuyo**: la cuenta vigilada se deduce del propietario del repositorio, los registros heredados se reinician en la primera ejecución del fork, y el mismo workflow activa y despliega GitHub Pages para el fork automáticamente. La arquitectura del frontend, la infraestructura de build y las convenciones del repositorio están adaptadas de [wowsp](https://github.com/langyo/wowsp).
+Sobre la lista en crudo, el watchdog **perfila a cada seguidor dentro de presupuestos estrictos de rate limit** (volumen de contribuciones, equilibrio siguiendo/seguidores, repos públicos, completitud del perfil, antigüedad de la cuenta) y el panel convierte esos hechos en una puntuación transparente de 0 a 100 que separa a los humanos probables de los bots sospechosos de seguimiento masivo.
+
+Haz fork y pasa a ser **tuyo**: la cuenta vigilada se deduce del propietario del repositorio, los registros heredados se reinician en la primera ejecución del fork, y el mismo workflow activa y despliega GitHub Pages para el fork automáticamente.
 
 ## Inicio rápido
 
-1. Haz fork del repositorio.
-2. Activa **Actions** en tu fork — GitHub desactiva los workflows en forks nuevos por defecto (Repository → Actions → «I understand my workflows, go ahead and enable them»).
-3. Dispara una vez el workflow **Watch** con **Run workflow** — esa primera ejecución registra tus seguidores actuales como línea base y publica tu sitio de Pages.
-4. Abre `https://<tú>.github.io/github-follower-watchdog/` — a partir de ahí se refresca solo cada hora.
+Todo lo que sigue lleva unos dos minutos tras el fork.
 
-Si esa primera ejecución falla en *Configure Pages* — GitHub a veces rechaza que el token del workflow cree el sitio — actívalo una vez en **Settings → Pages → Source: GitHub Actions** y vuelve a ejecutar el workflow.
+1. **Haz fork del repositorio** — el nombre es libre; esta guía asume que conservaste `github-follower-watchdog`.
 
-Para vigilar cualquier otra cuenta pública, define `WATCH_USER` en `.github/workflows/watch.yml`.
+2. **Activa Actions en tu fork** — abre `https://github.com/<tú>/github-follower-watchdog/actions` en un navegador. GitHub desactiva los workflows en forks nuevos por defecto; pulsa **I understand my workflows, go ahead and enable them**.
+
+3. **Lanza la primera comprobación** — en esa misma página de Actions, elige **Watch** en la barra lateral → **Run workflow** → **Run workflow**. (Puedes subir *Max accounts to enrich* aquí si quieres que las puntuaciones se completen antes.) Esa primera ejecución registra tus seguidores actuales como línea base y publica tu sitio.
+
+4. **Abre tu panel** — `https://<tú>.github.io/github-follower-watchdog/`. A partir de ahí se refresca solo cada hora, cuando algo cambió.
+
+Si la primera ejecución se detiene en el paso *Configure Pages* — GitHub a veces rechaza que el token del workflow cree el sitio — abre `https://github.com/<tú>/github-follower-watchdog/settings/pages`, pon **Source → GitHub Actions** y ejecuta **Watch** otra vez.
+
+**Dónde viven los datos.** `data/current.json` es la lista al día, `data/history.jsonl` el registro de solo adición de follows/unfollows, y `data/accounts.json` los hechos por cuenta tras las puntuaciones. Los tres los escribe solo la CI y se confirman en tu fork — `git log -- data/` es la pista de auditoría completa: sin servicios externos, sin base de datos, nada que creer más que git.
+
+**Vigilar a otro.** Define `WATCH_USER` en `.github/workflows/watch.yml` (o pasa la cuenta como argumento a `just watch <login>` en local) para vigilar cualquier cuenta pública en lugar de la tuya.
 
 ## Cómo funciona
 
-- `scripts/watchdog.py` — todo el capturador: paginación acotada, escrituras atómicas, orden de instantánea-primero-luego-historial (una ejecución abortada puede perder una línea de la cronología, nunca duplicar eventos), y la regla de oro de «no se escriben datos ante cualquier fallo de la API».
-- `data/current.json` + `data/history.jsonl` — los registros; **escritos solo por la CI** (AGENTS.md §5), una adición + un commit por cambio.
-- `.github/workflows/watch.yml` — cron horario + manual + push: watchdog → commit si hubo cambios → build del sitio → despliegue en Pages. Las horas sin cambios se saltan el build y terminan en ~20 s; el camino con cambios se queda holgadamente por debajo del minuto. (GitHub desactiva los workflows programados tras 60 días de inactividad del repositorio — los propios commits de datos cuentan como actividad.)
-- `site/` — el panel. Vite + Vue 3 en TSX (sin SFC `.vue`) + SCSS + vue-i18n, siguiendo la arquitectura del website de wowsp. Los registros se copian tal cual en el bundle como recursos públicos y se obtienen en tiempo de ejecución, así que un cambio de solo datos jamás requiere reconstruir la aplicación.
+- `scripts/watchdog.py` — todo el capturador: paginación acotada, escrituras atómicas, orden de instantánea-primero-luego-historial (una ejecución abortada puede perder una línea de la cronología, nunca duplicar eventos), y la regla de oro de «no se escriben datos ante cualquier fallo de la API» para la instantánea. Una segunda fase de mejor esfuerzo enriquece hasta `WATCH_ENRICH_CAP` (por defecto 40, máximo 200) cuentas por ejecución vía el endpoint REST de usuario más una consulta GraphQL agrupada, y solo escribe si algún hecho cambió de verdad.
+- `data/current.json` + `data/history.jsonl` + `data/accounts.json` — los registros; **escritos solo por la CI** (AGENTS.md §5).
+- `.github/workflows/watch.yml` — cron horario + manual + push: watchdog → commit si hubo cambios → build del sitio → despliegue en Pages. Las horas sin cambios se saltan el build y terminan en ~20 s; el camino con cambios ronda el minuto. (GitHub desactiva los workflows programados tras 60 días de inactividad del repositorio — los propios commits de datos cuentan como actividad.)
+- `site/` — el panel. Vite + Vue 3 en TSX (sin SFC `.vue`) + SCSS + vue-i18n, 8 idiomas. Los registros se copian tal cual en el bundle como recursos públicos y se obtienen en tiempo de ejecución, así que un cambio de solo datos jamás requiere reconstruir la aplicación; la puntuación se calcula íntegramente en el navegador en `site/src/data/scoring.ts`.
+
+## El modelo de puntuación
+
+La puntuación es deliberadamente explicable — los puntos se suman por las señales humanas clásicas y dos penalizaciones multiplican a la baja las formas clásicas de bot:
+
+| Señal | Puntos |
+| --- | --- |
+| Equilibrio siguiendo/seguidores (0 siguiendo, o ratio ≤ 2) | hasta +25 |
+| Contribuciones del último año (GraphQL) | hasta +30 |
+| Repos públicos | hasta +15 |
+| Completitud del perfil (nombre, bio, empresa, ubicación, blog) | hasta +10 |
+| Antigüedad de la cuenta | hasta +15 |
+| Forma «seguimiento masivo» (siguiendo ≥ 500, seguidores < 50) | × 0.5 |
+| Forma «cuenta vacía» (sin contribuciones y sin repos) | × 0.6 |
+
+Los grupos **Reales** (≥ 60), **Dudosos** (30–59) y **Sospechosos** (< 30) se pueden filtrar en el panel. Los perfiles se refrescan poco a poco (una muestra aleatoria, ~40 cuentas por hora) sin tocar jamás un rate limit.
 
 ## Desarrollo local
 
@@ -61,14 +86,10 @@ just build                  # comprobación de tipos + build de producción
 just lint-msg               # sujetos de commits en master..HEAD (AGENTS.md §1)
 ```
 
-`GITHUB_TOKEN` es opcional en local — sube el límite de la API de 60 a 5000 peticiones por hora.
+`GITHUB_TOKEN` es opcional para una simple lectura de seguidores, pero el enriquecimiento de cuentas (las puntuaciones) solo corre con un token en el entorno — `export GITHUB_TOKEN=$(gh auth token)`.
 
 ## Documentación
 
 Los README traducidos viven en [`docs/`](../../) (`docs/<lang>/guides/README-github-follower-watchdog.md`, 8 idiomas además de este). Las reglas del repositorio, para agentes IA y contribuyentes humanos por igual, están en [`AGENTS.md`](../../../AGENTS.md).
 
 Fuente: [langyo/github-follower-watchdog](https://github.com/langyo/github-follower-watchdog).
-
-## Estado
-
-🎉 **Listo** — la vigilancia horaria, el historial registrado en git y el panel de Pages están en marcha; el workflow además activa Pages en forks nuevos. La hoja de ruta es deliberadamente corta: más idiomas para la página y un modo instantáneo basado en webhooks son las únicas ideas en la lista.

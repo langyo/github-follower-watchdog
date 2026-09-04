@@ -8,34 +8,59 @@ REST API, diffs it against ``data/current.json``, appends the delta to
 the follower set actually changed, so a no-change hour stays a no-op in
 git (no commit, no Pages redeploy).
 
+A second, *bounded* phase enriches the roster with per-account facts
+(profile counters + last-year contribution total) into
+``data/accounts.json``; the site turns those facts into the bot/real
+score. Every phase has hard caps — AGENTS.md §9:
+  followers pages   MAX_PAGES (100) x PER_PAGE (100) = 10,000 rows
+  retries           RETRY_DELAYS (1, 3) → 3 attempts, never unbounded
+  enrichment        WATCH_ENRICH_CAP (default 40, max 200) accounts/run
+
 Data layout (records live in git, written by CI only):
   data/current.json   {"schema":1,"watch":...,"profile":{...},
                        "updated_at":...,"followers":[{"login","id"},...]}
   data/history.jsonl  one JSON event per line, append-only:
                        {"ts":...,"type":"bootstrap","count":N}
                        {"ts":...,"type":"follow"|"unfollow","login":...,"id":...}
+  data/accounts.json  {"schema":1,"accounts":{"<login>":{facts...}}} —
+                       facts: followers, following, public_repos,
+                       created_at, contributions (last year, nullable),
+                       profile_fields (present public profile bits),
+                       missing (true once the account vanished).
+                       Written only when a fact actually changed, so
+                       quiet hours stay commit-free; stale entries are
+                       re-sampled randomly at the cap rate.
 
-Watch target resolution order (the fork story — AGENTS.md §0 of README):
-  1. ``WATCH_USER`` env — watch any public account instead of yourself.
-  2. Owner part of ``GITHUB_REPOSITORY`` — the CI default, so a fork
+Watch target resolution order (the fork story — README "Quick start"):
+  1. CLI argument (``just watch <login>``).
+  2. ``WATCH_USER`` env — watch any public account instead of yourself.
+  3. Owner part of ``GITHUB_REPOSITORY`` — the CI default, so a fork
      automatically watches the fork owner's own followers.
-  3. Owner parsed from the ``origin`` remote — local development runs.
+  4. Owner parsed from the ``origin`` remote — local development runs.
 
 Writes are ordered current-first-then-history: a crash between the two
 leaves the snapshot advanced with one missing timeline line, never
 duplicated events (a re-diff against the new current produces nothing).
+
+Enrichment is best-effort by design: any API failure there skips the
+phase for this run instead of failing the snapshot (the core product
+must not go dark because a profiling endpoint hiccupped).
 """
 
 from __future__ import annotations
 
+import calendar
+import http.client
 import json
 import os
+import random
 import re
 import subprocess
 import sys
 import time
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -45,10 +70,26 @@ MAX_PAGES = 100  # hard cap: 10,000 followers per run (bounded work, AGENTS.md �
 HTTP_TIMEOUT = 20
 RETRY_DELAYS = (1, 3)  # bounded retries, never an unbounded loop
 
+ENRICH_CAP_DEFAULT = 40  # steady-state: one GraphQL batch + ~8s of parallel REST
+ENRICH_CAP_MAX = 200  # manual backfill ceiling (workflow_dispatch input)
+ENRICH_STALE_DAYS = 30  # eligible for a facts refresh after this long
+ENRICH_STALE_SECONDS = ENRICH_STALE_DAYS * 86400
+ENRICH_WORKERS = 8  # parallel profile fetches (core REST, well within limits)
+GQL_BATCH = 40  # ~6 nodes/alias → ~250 rate-limit points per batch
+
+CONTRIBUTION_FIELDS = (
+    "totalCommitContributions",
+    "totalIssueContributions",
+    "totalPullRequestContributions",
+    "totalPullRequestReviewContributions",
+)
+PROFILE_FIELDS = ("name", "bio", "company", "location", "blog")
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 CURRENT_PATH = DATA_DIR / "current.json"
 HISTORY_PATH = DATA_DIR / "history.jsonl"
+ACCOUNTS_PATH = DATA_DIR / "accounts.json"
 
 SCHEMA = 1
 
@@ -83,9 +124,8 @@ def _fail_no_write(message: str) -> None:
     sys.exit(f"error: {message}; no data was written (last good state kept)")
 
 
-def api_get(path: str, token: str | None) -> Any:
-    """GET a GitHub API endpoint with bounded retries; abort on hard errors."""
-    url = path if path.startswith("http") else f"{API_ROOT}{path}"
+def _http_json(url: str, token: str | None, *, payload: bytes | None = None):
+    """One HTTP round trip → parsed JSON. Raises on transport/HTTP errors."""
     headers = {
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
@@ -93,15 +133,21 @@ def api_get(path: str, token: str | None) -> Any:
     }
     if token:
         headers["Authorization"] = f"Bearer {token}"
+    request = urllib.request.Request(url, data=payload, headers=headers)
+    with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def api_get(path: str, token: str | None) -> Any:
+    """GET a GitHub API endpoint with bounded retries; abort on hard errors."""
+    url = path if path.startswith("http") else f"{API_ROOT}{path}"
 
     last: Exception | None = None
     for attempt in range(len(RETRY_DELAYS) + 1):
         if attempt:
             time.sleep(RETRY_DELAYS[attempt - 1])
-        request = urllib.request.Request(url, headers=headers)
         try:
-            with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT) as resp:
-                return json.loads(resp.read().decode("utf-8"))
+            return _http_json(url, token)
         except urllib.error.HTTPError as exc:
             if exc.code == 403 and exc.headers.get("x-ratelimit-remaining") == "0":
                 reset = int(exc.headers.get("x-ratelimit-reset", "0"))
@@ -111,10 +157,80 @@ def api_get(path: str, token: str | None) -> Any:
             if exc.code in (404, 401):
                 _fail_no_write(f"HTTP {exc.code} for {url} — {exc.reason}")
             last = exc  # 403 secondary limit / 429 / 5xx → retry
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-            last = exc  # network hiccup → retry
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError,
+                OSError, json.JSONDecodeError) as exc:
+            last = exc  # connection reset / incomplete read / hiccup → retry
 
     _fail_no_write(f"giving up on {url} after retries: {last}")
+
+
+def api_get_soft(path: str, token: str | None) -> tuple[dict[str, Any] | None, str]:
+    """Bounded-retry GET for the enrichment phase: never fatal.
+
+    Returns (payload, "") on success, (None, reason) on failure — a 404
+    (account deleted) and rate exhaustion are both caller-handled.
+    """
+    url = path if path.startswith("http") else f"{API_ROOT}{path}"
+
+    last: Exception | None = None
+    for attempt in range(len(RETRY_DELAYS) + 1):
+        if attempt:
+            time.sleep(RETRY_DELAYS[attempt - 1])
+        try:
+            return _http_json(url, token), ""
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                return None, "not-found"
+            if exc.code == 403 and exc.headers.get("x-ratelimit-remaining") == "0":
+                return None, "rate-limited"
+            last = exc
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError,
+                OSError, json.JSONDecodeError) as exc:
+            last = exc
+    return None, f"unreachable ({last})"
+
+
+def graphql_contributions(logins: list[str], token: str | None) -> dict[str, int]:
+    """Last-year contribution totals, aliased-batched (GQL_BATCH per query)."""
+    if not token:
+        return {}
+    totals: dict[str, int] = {}
+    for start in range(0, len(logins), GQL_BATCH):
+        batch = logins[start:start + GQL_BATCH]
+        aliases = " ".join(
+            f'u{i}: user(login: {json.dumps(login)}) {{'
+            f' contributionsCollection {{ {" ".join(CONTRIBUTION_FIELDS)} }} }}'
+            for i, login in enumerate(batch)
+        )
+        body = json.dumps({"query": f"query {{ {aliases} }}"}).encode("utf-8")
+        data: dict[str, Any] | None = None
+        for attempt in range(len(RETRY_DELAYS) + 1):
+            if attempt:
+                time.sleep(RETRY_DELAYS[attempt - 1])
+            try:
+                request = urllib.request.Request(
+                    f"{API_ROOT}/graphql", data=body,
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "User-Agent": "github-follower-watchdog",
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT) as resp:
+                    data = json.loads(resp.read().decode("utf-8")).get("data")
+                break
+            except (urllib.error.URLError, urllib.error.HTTPError,
+                    http.client.HTTPException, TimeoutError, OSError,
+                    json.JSONDecodeError):
+                data = None  # retry / give up quietly — enrichment is optional
+        if not data:
+            break  # GraphQL unavailable this run → contributions stay null
+        for i, login in enumerate(batch):
+            node = data.get(f"u{i}") or {}
+            collection = node.get("contributionsCollection")
+            if collection:
+                totals[login] = sum(int(collection.get(f, 0) or 0) for f in CONTRIBUTION_FIELDS)
+    return totals
 
 
 def fetch_profile(user: str, token: str | None) -> dict[str, Any]:
@@ -150,10 +266,10 @@ def fetch_followers(user: str, token: str | None) -> list[dict[str, Any]]:
     return followers
 
 
-def load_current() -> dict[str, Any] | None:
+def load_json(path: Path) -> dict[str, Any] | None:
     try:
-        current = json.loads(CURRENT_PATH.read_text(encoding="utf-8"))
-        return current if isinstance(current, dict) else None
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        return doc if isinstance(doc, dict) else None
     except (OSError, json.JSONDecodeError):
         return None
 
@@ -172,6 +288,118 @@ def append_history(events: list[dict[str, Any]]) -> None:
             fh.write(json.dumps(event, ensure_ascii=False, separators=(",", ":")) + "\n")
 
 
+def enrich_accounts(
+    accounts: dict[str, Any], followers: list[dict[str, Any]], token: str | None, cap: int
+) -> tuple[dict[str, Any], bool, int]:
+    """Refresh per-account facts within the run cap; write-only-on-change.
+
+    Eligible = never-seen accounts (always first) + facts older than
+    ENRICH_STALE_DAYS, sampled randomly so refresh work spreads evenly.
+    ``checked_at`` is only persisted when a fact changed, so unchanged
+    accounts stay eligible (cheap to recheck, no git churn). Returns the
+    new map, whether anything changed (→ commit) and how many were fetched.
+    """
+    if cap <= 0 or not followers:
+        return accounts, False, 0
+
+    now = time.time()
+    missing: list[str] = []
+    stale: list[str] = []
+    for follower in followers:
+        login = follower["login"]
+        entry = accounts.get(login)
+        if entry is None:
+            missing.append(login)
+            continue
+        checked = entry.get("checked_at")
+        try:
+            age = now - calendar.timegm(time.strptime(checked, "%Y-%m-%dT%H:%M:%SZ"))
+        except (TypeError, ValueError):
+            age = ENRICH_STALE_SECONDS + 1
+        if age > ENRICH_STALE_SECONDS:
+            stale.append(login)
+    random.shuffle(stale)
+    targets = (missing + stale)[:cap]
+    if not targets:
+        return accounts, False, 0
+
+    contributions = graphql_contributions(targets, token)
+
+    # Profiles fetch in parallel (a small bounded pool keeps the phase at
+    # seconds, not minutes); results apply in order so the abort-on-rate-
+    # limit logic stays deterministic.
+    def soft_fetch(login: str) -> tuple[str, dict[str, Any] | None, str]:
+        payload, reason = api_get_soft(f"/users/{login}", token)
+        return login, payload, reason
+
+    changed = False
+    fetched = 0
+    aborted = False
+    # Waves bounded at GQL_BATCH keep the eager-submit blast radius of an
+    # abort to a single wave instead of the whole cap.
+    with ThreadPoolExecutor(max_workers=ENRICH_WORKERS) as pool:
+        for start in range(0, len(targets), GQL_BATCH):
+            wave = targets[start:start + GQL_BATCH]
+            for login, payload, reason in pool.map(soft_fetch, wave):
+                if payload is None:
+                    if reason == "not-found":
+                        previous = accounts.get(login)
+                        # Only the first disappearance writes; repeat 404s keep the
+                        # old checked_at so the entry never churns git on its own.
+                        if previous is None or not previous.get("missing"):
+                            accounts[login] = {"checked_at": _iso_now(), "missing": True}
+                            changed = True
+                        fetched += 1
+                    elif reason == "rate-limited":
+                        aborted = True
+                        break
+                    continue  # transient failure: leave the entry stale, retry next run
+                fetched += 1
+                previous = accounts.get(login) or {}
+                if login in contributions:
+                    # Fresh GraphQL number; when a batch failed this run, carry
+                    # the previous total forward instead of demoting to null
+                    # (a spurious "change" plus a visible score dip).
+                    total = contributions[login]
+                else:
+                    total = previous.get("contributions")
+                entry = {
+                    "checked_at": _iso_now(),
+                    "followers": int(payload.get("followers") or 0),
+                    "following": int(payload.get("following") or 0),
+                    "public_repos": int(payload.get("public_repos") or 0),
+                    "created_at": payload.get("created_at") or "",
+                    "contributions": total,
+                    "profile_fields": [f for f in PROFILE_FIELDS if payload.get(f)],
+                }
+                if previous is None or {k: v for k, v in previous.items() if k != "checked_at"} != {
+                    k: v for k, v in entry.items() if k != "checked_at"
+                }:
+                    accounts[login] = entry
+                    changed = True
+            if aborted:
+                break
+    if aborted:
+        print("enrichment stopped early — API rate limit reached")
+
+    return accounts, changed, fetched
+
+
+def _iso_now() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def resolve_enrich_cap(token: str | None) -> int:
+    """Cap from WATCH_ENRICH_CAP, bounded; 0 disables (e.g. no token)."""
+    if not token:
+        return 0
+    try:
+        cap = int(os.environ.get("WATCH_ENRICH_CAP") or ENRICH_CAP_DEFAULT)
+    except ValueError:
+        cap = ENRICH_CAP_DEFAULT
+    return max(0, min(cap, ENRICH_CAP_MAX))
+
+
 def main() -> int:
     cli_arg = sys.argv[1] if len(sys.argv) > 1 else None
     user = resolve_target(cli_arg)
@@ -179,9 +407,9 @@ def main() -> int:
 
     profile = fetch_profile(user, token)
     followers = fetch_followers(user, token)
-    now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    now = _iso_now()
 
-    prev = load_current()
+    prev = load_json(CURRENT_PATH)
     if prev is not None and prev.get("watch") != user:
         # A fork keeps the upstream data files; the first run on a new owner
         # starts a fresh timeline instead of drowning it in "unfollows".
@@ -205,7 +433,17 @@ def main() -> int:
             + [{"ts": now, "type": "unfollow", **f} for f in lost]
         )
 
-    if prev is not None and not events:
+    # Enrichment runs on every successful fetch (even no-change hours) so a
+    # fresh fork's scores backfill gradually; it never blocks the snapshot.
+    accounts_doc = load_json(ACCOUNTS_PATH)
+    accounts_raw = accounts_doc.get("accounts") if accounts_doc else None
+    accounts: dict[str, Any] = accounts_raw if isinstance(accounts_raw, dict) else {}
+    cap = resolve_enrich_cap(token)
+    if cap == 0 and not token:
+        print("enrichment skipped — set GITHUB_TOKEN to collect account facts")
+    accounts, accounts_changed, enriched = enrich_accounts(accounts, followers, token, cap)
+
+    if prev is not None and not events and not accounts_changed:
         print(f"no changes — {len(followers)} followers, nothing written")
         return 0
 
@@ -219,7 +457,10 @@ def main() -> int:
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     write_json_atomic(CURRENT_PATH, current)
-    append_history(events)
+    if events:
+        append_history(events)
+    if accounts_changed:
+        write_json_atomic(ACCOUNTS_PATH, {"schema": SCHEMA, "accounts": accounts})
 
     if prev is None:
         print(f"bootstrap — recorded {len(followers)} followers for {user}")
@@ -227,9 +468,13 @@ def main() -> int:
         for event in events:
             arrow = "+" if event["type"] == "follow" else "-"
             print(f"{arrow} {event['login']}")
+    if enriched:
         gained = sum(1 for e in events if e["type"] == "follow")
         lost = sum(1 for e in events if e["type"] == "unfollow")
-        print(f"summary — +{gained} -{lost} · total {len(followers)} followers")
+        print(
+            f"summary — +{gained} -{lost} · total {len(followers)} followers · "
+            f"{enriched} account profiles refreshed"
+        )
     return 0
 
 

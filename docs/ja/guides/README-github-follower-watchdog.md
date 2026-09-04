@@ -31,25 +31,50 @@ GitHub Follower Watchdog は、リポジトリの中だけで完結するサー�
 
 3. **Pages で公開されるダッシュボード** —— 変動のたびに単一ページのダッシュボード（Vue 3 · TSX · SCSS · vue-i18n、8 言語、ダーク＆ライト）が再デプロイされ、フォロワー数の推移、フォロー／解除のタイムライン、現在の名簿を表示します。
 
-Fork すれば**あなたのもの**になります：監視対象アカウントはリポジトリの owner から自動解決され、引き継いだ記録は fork 初回実行時にリセットされ、同じ workflow が fork の GitHub Pages を自動で有効化してデプロイします。フロントエンド構成、ビルド基盤、リポジトリ規約は [wowsp](https://github.com/langyo/wowsp) から転用しました。
+さらに watchdog は、厳格なレート制限バジェットの中で**フォロワー一人ひとりのプロファイルを収集**し（昨年の貢献数、フォロー比率、公開リポジトリ数、プロフィール充実度、アカウント年齢）、ダッシュボードがその事実を解釈可能な 0–100 のスコアに変換します。これで実在の人物と、大量フォローを狙う疑わしいボットを区別できます。
+
+Fork すれば**あなたのもの**になります：監視対象アカウントはリポジトリの owner から自動解決され、引き継いだ記録は fork 初回実行時にリセットされ、同じ workflow が fork の GitHub Pages を自動で有効化してデプロイします。
 
 ## クイックスタート
 
-1. このリポジトリを fork します。
-2. fork で **Actions** を有効化します —— GitHub は新しい fork の workflow をデフォルトで無効にします（Repository → Actions → "I understand my workflows, go ahead and enable them"）。
-3. **Run workflow** から **Watch** workflow を一度実行します —— 初回実行が現在のフォロワーをベースラインとして記録し、Pages サイトを公開します。
-4. `https://<あなた>.github.io/github-follower-watchdog/` を開きます —— 以後、毎時間自動で更新されます。
+Fork の後は以下の通りです。所要は 2 分ほどです。
 
-もし初回実行が *Configure Pages* で失敗したら —— GitHub が workflow トークンによるサイト作成を拒むことがあります —— **Settings → Pages → Source: GitHub Actions** で一度有効化してから workflow を再実行してください。
+1. **リポジトリを fork** —— 名前は何でも構いません。このガイドでは `github-follower-watchdog` をそのまま使う前提で書いています。
 
-自分以外の公開アカウントを監視したい場合は、`.github/workflows/watch.yml` の `WATCH_USER` を設定してください。
+2. **fork で Actions を有効化** —— ブラウザで `https://github.com/<あなた>/github-follower-watchdog/actions` を開きます。GitHub は新しい fork の workflow をデフォルトで無効にするので、**I understand my workflows, go ahead and enable them** をクリックします。
+
+3. **最初のチェックを実行** —— 同じ Actions ページの左サイドバーで **Watch** を選び → **Run workflow** → **Run workflow**。（実在/ボットのスコアを早く埋めたい場合は *Max accounts to enrich* を大きくしてください。）初回実行が現在のフォロワーをベースラインとして記録し、サイトを公開します。
+
+4. **ダッシュボードを開く** —— `https://<あなた>.github.io/github-follower-watchdog/`。以後、変化があった時間帯だけ毎時間自動で更新されます。
+
+もし初回実行が *Configure Pages* で止まったら —— GitHub が workflow トークンによるサイト作成を拒むことがあります —— `https://github.com/<あなた>/github-follower-watchdog/settings/pages` を開いて **Source** を **GitHub Actions** に設定し、**Watch** をもう一度実行してください。
+
+**データの場所。** `data/current.json` が最新の名簿、`data/history.jsonl` が追記専用のフォロー／解除ログ、`data/accounts.json` がスコアの元になるアカウント事実です。すべて CI のみが書き込み、fork にコミットされます —— `git log -- data/` が完全な監査証跡です。外部サービスもデータベースもなく、信じるのは git だけです。
+
+**他人を監視する。** `.github/workflows/watch.yml` の `WATCH_USER` を設定するか（ローカルなら `just watch <ログイン名>`）、任意の公開アカウントを監視できます。
 
 ## 仕組み
 
-- `scripts/watchdog.py` —— 取得部のすべて：上限付きページング、アトミック書き込み、スナップショット→履歴の書き込み順（クラッシュしてもタイムライン 1 行を失うだけで、イベントが重複することはありません）、そして API 失敗時は一切書き込まない鉄則。
-- `data/current.json` + `data/history.jsonl` —— 記録の実体。**CI のみが書き込みます**（AGENTS.md §5）。変動 1 回 = 追記 1 回 + コミット 1 回。
-- `.github/workflows/watch.yml` —— 毎時 cron + 手動 + push：watchdog → 変化があればコミット → サイトをビルド → Pages へデプロイ。変化のない時間帯はビルドをスキップして約 20 秒、変化があっても 1 分以内に収まります。（GitHub はリポジトリが 60 日間非アクティブだと定期実行を無効化します —— データコミット自体がアクティビティになります。）
-- `site/` —— ダッシュボード。Vite + Vue 3 TSX（`.vue` SFC なし）+ SCSS + vue-i18n、wowsp website と同じ構成。記録はそのまま公開アセットとしてバンドルにコピーされ実行時に取得されるため、データだけの変更にアプリの再ビルドは不要です。
+- `scripts/watchdog.py` —— 取得部のすべて：上限付きページング、アトミック書き込み、スナップショット→履歴の書き込み順（クラッシュしてもタイムライン 1 行を失うだけで、イベントが重複することはありません）、そして API 失敗時は一切書き込まない鉄則。第 2 段階はベストエフォートのプロファイル収集です：毎回の実行で最大 `WATCH_ENRICH_CAP`（既定 40、上限 200）アカウントを REST ユーザーエンドポイントと 1 回のバッチ GraphQL クエリで取得し、事実が変わったときだけ書き込みます。
+- `data/current.json` + `data/history.jsonl` + `data/accounts.json` —— 記録の実体。**CI のみが書き込みます**（AGENTS.md §5）。
+- `.github/workflows/watch.yml` —— 毎時 cron + 手動 + push：watchdog → 変化があればコミット → サイトをビルド → Pages へデプロイ。変化のない時間帯はビルドをスキップして約 20 秒、変化があっても 1 分ほどです。（GitHub はリポジトリが 60 日間非アクティブだと定期実行を無効化します —— データコミット自体がアクティビティになります。）
+- `site/` —— ダッシュボード。Vite + Vue 3 TSX（`.vue` SFC なし）+ SCSS + vue-i18n、8 言語。記録はそのまま公開アセットとしてバンドルにコピーされ実行時に取得されるため、データだけの変更にアプリの再ビルドは不要です。スコア計算はすべてブラウザ側（`site/src/data/scoring.ts`）です。
+
+## スコアモデル
+
+スコアは意図して説明可能に設計されています —— 実在人物の典型的シグナルで加算し、ボットの典型的形状で乗算的に減点します：
+
+| シグナル | 配点 |
+| --- | --- |
+| フォロー比率のバランス（フォロー 0、または比率 ≤ 2） | 最大 +25 |
+| 昨年の貢献数（GraphQL） | 最大 +30 |
+| 公開リポジトリ数 | 最大 +15 |
+| プロフィール充実度（名前・自己紹介・会社・場所・ブログ） | 最大 +10 |
+| アカウント年齢 | 最大 +15 |
+| 大量フォロー型（フォロー ≥ 500 かつフォロワー < 50） | × 0.5 |
+| 空アカウント型（貢献 0 かつリポジトリ 0） | × 0.6 |
+
+ダッシュボードでは **実在**（≥ 60）、**要確認**（30–59）、**ボット疑い**（< 30）の 3 グループで絞り込めます。プロファイルはランダムに少しずつ更新され（毎時約 40 アカウント）、レート制限に一切触れずに最新状態を保ちます。
 
 ## ローカル開発
 
@@ -61,14 +86,10 @@ just build                  # 型チェック + 本番ビルド
 just lint-msg               # master..HEAD のコミットタイトルを検証（AGENTS.md §1）
 ```
 
-ローカルの `GITHUB_TOKEN` は任意です —— API レート制限を毎時 60 回から 5000 回へ引き上げます。
+フォロワー一覧の取得だけなら `GITHUB_TOKEN` は任意ですが、アカウントのプロファイル収集（＝スコア）はトークンがあるときだけ動きます —— `export GITHUB_TOKEN=$(gh auth token)`。
 
 ## ドキュメント
 
 各言語の README は [`docs/`](../../) にあります（`docs/<lang>/guides/README-github-follower-watchdog.md`、英語のほか 8 言語）。AI エージェントと人間の貢献者共通のリポジトリ規約は [`AGENTS.md`](../../../AGENTS.md) にあります。
 
 ソース: [langyo/github-follower-watchdog](https://github.com/langyo/github-follower-watchdog)。
-
-## 状態
-
-🎉 **稼働中** —— 毎時チェック、git 記録、Pages ダッシュボードがすべて稼働中。workflow は新しい fork でも Pages を自動有効化します。ロードマップは意図して短く：ページの言語追加と、webhook ベースの即時モードだけがリストに載っています。

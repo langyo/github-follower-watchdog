@@ -35,6 +35,26 @@ export default {
   },
   followers: {
     title: "目前關注者",
+    assessed: "已評估 {assessed} / {total} 個帳號",
+    emptyGroup: "該分組下暫無關注者",
+    groups: {
+      all: "全部",
+      real: "真人",
+      uncertain: "存疑",
+      suspect: "疑似機器人",
+      unassessed: "未評估",
+    },
+    tip: {
+      score: "評分",
+      contribs: "貢獻數（近一年）",
+      repos: "公開儲存庫",
+      following: "正在關注",
+      followers: "關注者",
+      since: "註冊於",
+      unknown: "未知",
+      nofacts: "尚未評估 —— 資料會逐步收集",
+      missing: "該帳號已從 GitHub 註銷",
+    },
   },
   states: {
     loading: "正在讀取巡檢記錄……",

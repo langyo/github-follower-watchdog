@@ -1,4 +1,4 @@
-import { computed, defineComponent } from "vue";
+import { computed, defineComponent, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   AlertTriangle, ArrowUpRight, Inbox, RefreshCw, TrendingUp,
@@ -6,6 +6,9 @@ import {
 } from "@lucide/vue";
 import { initWatch, status, watch as watchData } from "@/data/store";
 import { avatarUrl, profileUrl } from "@/data/load";
+import {
+  scoreFacts, GROUP_ORDER, type AccountFacts, type Scored, type ScoreGroup,
+} from "@/data/scoring";
 import GithubMark from "@/components/GithubMark";
 import Sparkline from "@/components/Sparkline";
 import { LinkButton, Reveal } from "@/components/ui";
@@ -72,6 +75,65 @@ export default defineComponent({
     });
 
     const followers = computed(() => data.value?.current.followers ?? []);
+
+    // Per-follower scoring from the enrichment facts (data/accounts.json);
+    // accounts the watchdog has not profiled yet — and ones that vanished
+    // from GitHub — stay unassessed instead of presenting absence as fact.
+    const scores = computed(() => {
+      const map = new Map<string, { facts?: AccountFacts; scored: Scored | null }>();
+      for (const follower of followers.value) {
+        const facts = data.value?.accounts[follower.login];
+        const scored = facts && !facts.missing ? scoreFacts(facts) : null;
+        map.set(follower.login, { facts, scored });
+      }
+      return map;
+    });
+
+    const groupCounts = computed(() => {
+      const counts: Record<ScoreGroup, number> = {
+        all: followers.value.length, real: 0, uncertain: 0, suspect: 0, unassessed: 0,
+      };
+      for (const follower of followers.value) {
+        const info = scores.value.get(follower.login);
+        counts[info?.scored ? info.scored.cls : "unassessed"] += 1;
+      }
+      return counts;
+    });
+
+    const assessedCount = computed(
+      () => followers.value.length - groupCounts.value.unassessed,
+    );
+
+    const activeGroup = ref<ScoreGroup>("all");
+    const visibleFollowers = computed(() => {
+      if (activeGroup.value === "all") return followers.value;
+      return followers.value.filter((follower) => {
+        const info = scores.value.get(follower.login);
+        return (info?.scored ? info.scored.cls : "unassessed") === activeGroup.value;
+      });
+    });
+
+    function followerTip(login: string): string {
+      const info = scores.value.get(login);
+      if (!info?.facts || !info.scored) {
+        return info?.facts?.missing
+          ? t("followers.tip.missing")
+          : t("followers.tip.nofacts");
+      }
+      const f = info.facts;
+      const since = f.created_at
+        ? new Intl.DateTimeFormat(locale.value, { dateStyle: "medium" })
+            .format(new Date(f.created_at))
+        : t("followers.tip.unknown");
+      return [
+        `${t("followers.tip.score")}: ${info.scored.score}`,
+        `${t("followers.tip.contribs")}: ${f.contributions ?? t("followers.tip.unknown")}`,
+        `${t("followers.tip.repos")}: ${f.public_repos ?? 0}`,
+        `${t("followers.tip.following")}: ${f.following ?? 0}`,
+        `${t("followers.tip.followers")}: ${f.followers ?? 0}`,
+        `${t("followers.tip.since")}: ${since}`,
+      ].join(" · ");
+    }
 
     return () => (
       <div class="watch">
@@ -297,7 +359,7 @@ export default defineComponent({
               </div>
             </section>
 
-            {/* ── FOLLOWERS — the current roster ─────────────── */}
+            {/* ── FOLLOWERS — the current roster, scored ──────── */}
             <section id="followers" class="followers section-bg">
               <div class="container">
                 <Reveal>
@@ -309,29 +371,74 @@ export default defineComponent({
                   </div>
                 </Reveal>
 
-                <div class="followers__grid">
-                  {followers.value.map((follower, i) => (
-                    <Reveal key={follower.login} delay={Math.min(i % 8, 6) * 30}>
-                      <a
-                        class="follower glass-panel is-interactive"
-                        href={profileUrl(follower.login)}
-                        target="_blank"
-                        rel="noopener"
-                      >
-                        <img
-                          class="follower__avatar"
-                          src={avatarUrl(follower.id, 96)}
-                          alt={follower.login}
-                          loading="lazy"
-                          width={40}
-                          height={40}
-                        />
-                        <span class="follower__login">{follower.login}</span>
-                        <ArrowUpRight size={13} class="follower__go" />
-                      </a>
-                    </Reveal>
-                  ))}
-                </div>
+                <Reveal delay={60}>
+                  <div class="followers__bar">
+                    <div class="followers__groups" role="group">
+                      {(["all", ...GROUP_ORDER] as const).map((group) => (
+                        <button
+                          key={group}
+                          type="button"
+                          class={[
+                            "followers__group",
+                            `is-${group}`,
+                            activeGroup.value === group ? "is-active" : "",
+                          ].join(" ")}
+                          onClick={() => (activeGroup.value = group)}
+                        >
+                          {t(`followers.groups.${group}`)}
+                          <span class="followers__group-count">
+                            {groupCounts.value[group].toLocaleString(locale.value)}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    <span class="followers__assessed">
+                      {t("followers.assessed", {
+                        assessed: assessedCount.value.toLocaleString(locale.value),
+                        total: followers.value.length.toLocaleString(locale.value),
+                      })}
+                    </span>
+                  </div>
+                </Reveal>
+
+                {visibleFollowers.value.length === 0 ? (
+                  <div class="glass-panel followers__empty">
+                    <Inbox size={16} />
+                    <span>{t("followers.emptyGroup")}</span>
+                  </div>
+                ) : (
+                  <div class="followers__grid">
+                    {visibleFollowers.value.map((follower, i) => {
+                      const info = scores.value.get(follower.login);
+                      const cls = info?.scored ? info.scored.cls : "unassessed";
+                      return (
+                        <Reveal key={follower.login} delay={Math.min(i % 8, 6) * 30}>
+                          <a
+                            class="follower glass-panel is-interactive"
+                            href={profileUrl(follower.login)}
+                            target="_blank"
+                            rel="noopener"
+                            title={followerTip(follower.login)}
+                          >
+                            <img
+                              class="follower__avatar"
+                              src={avatarUrl(follower.id, 96)}
+                              alt={follower.login}
+                              loading="lazy"
+                              width={40}
+                              height={40}
+                            />
+                            <span class="follower__login">{follower.login}</span>
+                            <span class={["follower__score", `is-${cls}`].join(" ")}>
+                              {info?.scored ? info.scored.score : "–"}
+                            </span>
+                            <ArrowUpRight size={13} class="follower__go" />
+                          </a>
+                        </Reveal>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </section>
           </>

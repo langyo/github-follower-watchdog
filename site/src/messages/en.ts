@@ -35,6 +35,26 @@ export default {
   },
   followers: {
     title: "Current followers",
+    assessed: "{assessed} of {total} accounts assessed",
+    emptyGroup: "No followers in this group",
+    groups: {
+      all: "All",
+      real: "Real",
+      uncertain: "Uncertain",
+      suspect: "Suspect",
+      unassessed: "Unassessed",
+    },
+    tip: {
+      score: "Score",
+      contribs: "Contributions (1y)",
+      repos: "Public repos",
+      following: "Following",
+      followers: "Followers",
+      since: "Joined",
+      unknown: "unknown",
+      nofacts: "Not assessed yet — facts are collected gradually",
+      missing: "Account no longer exists on GitHub",
+    },
   },
   states: {
     loading: "Fetching the watch records…",
