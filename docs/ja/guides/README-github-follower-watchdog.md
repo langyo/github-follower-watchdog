@@ -60,6 +60,17 @@ WATCH_ENRICH_CAP=200 just watch        # "no changes" と出るまで繰り返�
 
 生成された `data/` の記録をブランチにコミットして PR を出してマージすれば —— 次の毎時実行からそのファイルを取り込み、古くなった部分だけを更新します。
 
+**実行頻度を調整する（CI 枠の節約）。** cron は毎時そのまま発火しますが、実際にどれだけ走るかを決めるつまみはすべて普通のリポジトリ変数です —— **Settings → Secrets and variables → Actions → Variables**（`vars.*`）で一度設定するだけで、workflow の編集は不要です：
+
+| 変数 | 既定 | 意味 |
+| --- | --- | --- |
+| `WATCH_INTERVAL_HOURS` | `1` | 定時チェックの最小間隔（時間）。`6` にすると間の時間帯は数秒で終了 —— API 呼び出しも記録もビルドもデプロイもなし。手動の **Run workflow** は常に即時実行します。 |
+| `WATCH_ENRICH_CAP` | `40` | 1 回の実行でプロファイル収集するアカウント数の上限（最大 200。Run workflow の入力が優先）。 |
+| `WATCH_ENRICH_STALE_DAYS` | `30` | フォロワーのプロファイル事実を取り直すまでの日数。 |
+| `WATCH_USER` | fork の owner | 自分以外の公開アカウントを監視する。 |
+
+たとえば `WATCH_INTERVAL_HOURS=6` なら、定時の API トラフィックを約 83% 削減しつつ、推移・タイムライン・スコアは毎 4 回/日更新されます。
+
 **データの場所。** `data/current.json` が最新の名簿、`data/history.jsonl` が追記専用のフォロー／解除ログ、`data/accounts.json` がスコアの元になるアカウント事実です。すべて CI のみが書き込み、fork にコミットされます —— `git log -- data/` が完全な監査証跡です。外部サービスもデータベースもなく、信じるのは git だけです。
 
 **他人を監視する。** `.github/workflows/watch.yml` の `WATCH_USER` を設定するか（ローカルなら `just watch <ログイン名>`）、任意の公開アカウントを監視できます。

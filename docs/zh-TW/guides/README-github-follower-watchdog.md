@@ -60,6 +60,17 @@ WATCH_ENRICH_CAP=200 just watch        # 重複執行直到輸出 "no changes"
 
 然後把生成的 `data/` 記錄提交到分支、開 PR 並合併 —— 下一個整點巡檢會直接採用該檔案，只重新整理過期部分。
 
+**調整巡檢節奏（節約 CI 額度）。** cron 每小時照常觸發，但決定每次實際跑多少的旋鈕都是普通的倉庫變數 —— 在 **Settings → Secrets and variables → Actions → Variables**（`vars.*`）裡設定一次即可，無需改 workflow：
+
+| 變數 | 預設 | 含義 |
+| --- | --- | --- |
+| `WATCH_INTERVAL_HOURS` | `1` | 兩次定時巡檢的最小間隔小時數。設為 `6` 時，中間的小時會在幾秒內退出 —— 不呼叫 API、不寫記錄、不建構部署。手動 **Run workflow** 永遠立即執行。 |
+| `WATCH_ENRICH_CAP` | `40` | 每次執行最多富集的帳號數（上限 200；Run workflow 的輸入優先）。 |
+| `WATCH_ENRICH_STALE_DAYS` | `30` | 關注者資料多少天後重新整理。 |
+| `WATCH_USER` | fork owner | 改為監看其他公開帳號。 |
+
+例如 `WATCH_INTERVAL_HOURS=6` 能砍掉約 83% 的定時 API 流量，而趨勢、時間軸和評分每天仍重新整理四次。
+
 **資料存在哪裡。** `data/current.json` 是最新名單，`data/history.jsonl` 是只增不改的關注/取關日誌，`data/accounts.json` 存放評分背後的帳號事實。三者都只由 CI 寫入並提交到你的 fork —— `git log -- data/` 就是完整的審計線：沒有外部服務、沒有資料庫，只需要信任 git。
 
 **監看別人。** 在 `.github/workflows/watch.yml` 裡設定 `WATCH_USER`（或在本地 `just watch <登入名>` 傳參），即可監看任意公開帳號。

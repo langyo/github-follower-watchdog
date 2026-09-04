@@ -60,6 +60,17 @@ WATCH_ENRICH_CAP=200 just watch        # repite hasta que diga «no changes»
 
 Luego confirma los registros `data/` producidos en una rama, abre una PR y fusiónala — la siguiente ejecución horaria adopta el archivo y solo refresca lo que envejeció.
 
+**Ajustar la cadencia (ahorrar cuota de CI).** El cron se dispara cada hora, pero todos los mandos que deciden cuánto corre de verdad son simples variables del repositorio — se definen una vez en **Settings → Secrets and variables → Actions → Variables** (`vars.*`), sin editar el workflow:
+
+| Variable | Por defecto | Significado |
+| --- | --- | --- |
+| `WATCH_INTERVAL_HOURS` | `1` | Horas mínimas entre comprobaciones programadas. Con `6`, las horas intermedias terminan en segundos sin tocar la API — sin registros, sin build, sin despliegue. Las ejecuciones manuales **Run workflow** siempre comprueban al instante. |
+| `WATCH_ENRICH_CAP` | `40` | Cuentas perfiladas por ejecución (máximo 200; el campo Run workflow tiene prioridad). |
+| `WATCH_ENRICH_STALE_DAYS` | `30` | Días antes de refrescar los datos de un seguidor. |
+| `WATCH_USER` | propietario del fork | Vigilar cualquier otra cuenta pública. |
+
+Por ejemplo, `WATCH_INTERVAL_HOURS=6` recorta en torno al 83 % el tráfico API programado mientras la tendencia, la cronología y las puntuaciones se mantienen al día cuatro veces al día.
+
 **Dónde viven los datos.** `data/current.json` es la lista al día, `data/history.jsonl` el registro de solo adición de follows/unfollows, y `data/accounts.json` los hechos por cuenta tras las puntuaciones. Los tres los escribe solo la CI y se confirman en tu fork — `git log -- data/` es la pista de auditoría completa: sin servicios externos, sin base de datos, nada que creer más que git.
 
 **Vigilar a otro.** Define `WATCH_USER` en `.github/workflows/watch.yml` (o pasa la cuenta como argumento a `just watch <login>` en local) para vigilar cualquier cuenta pública en lugar de la tuya.

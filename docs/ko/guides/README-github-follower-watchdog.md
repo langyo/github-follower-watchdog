@@ -60,6 +60,17 @@ WATCH_ENRICH_CAP=200 just watch        # "no changes" 가 나올 때까지 반�
 
 생성된 `data/` 기록을 브랜치에 커밋해 PR 을 열고 머지하면 —— 다음 매시간 실행이 그 파일을 받아들여 오래된 부분만 새로 고칩니다.
 
+**실행 주기 조절(CI 한도 절약).** cron 은 매시간 그대로 발화하지만, 실제로 얼마나 돌지를 정하는 모든 손잡이는 평범한 저장소 변수입니다 —— **Settings → Secrets and variables → Actions → Variables**(`vars.*`)에서 한 번만 설정하면 workflow 를 수정할 필요가 없습니다:
+
+| 변수 | 기본값 | 의미 |
+| --- | --- | --- |
+| `WATCH_INTERVAL_HOURS` | `1` | 예정 점검 사이의 최소 시간. `6` 으로 설정하면 그 사이 시간대는 몇 초 만에 종료 —— API 호출도 기록도 빌드·배포도 없음. 수동 **Run workflow** 는 언제나 즉시 실행됩니다. |
+| `WATCH_ENRICH_CAP` | `40` | 실행당 프로필 수집 계정 수 상한(최대 200. Run workflow 입력이 우선). |
+| `WATCH_ENRICH_STALE_DAYS` | `30` | 팔로워 프로필 사실을 다시 가져오기까지의 일수. |
+| `WATCH_USER` | fork owner | 자신 대신 다른 공개 계정을 감시. |
+
+예컨대 `WATCH_INTERVAL_HOURS=6` 는 예정 API 트래픽을 약 83% 줄이면서도 추이·타임라인·점수는 하루 네 번 최신 상태로 유지합니다.
+
 **데이터의 위치.** `data/current.json` 은 최신 명단, `data/history.jsonl` 은 추가 전용 팔로우/언팔로우 로그, `data/accounts.json` 은 점수의 근거가 되는 계정 사실입니다. 셋 모두 CI 만 쓰고 fork 에 커밋됩니다 —— `git log -- data/` 가 완전한 감사 기록입니다. 외부 서비스도 데이터베이스도 없이 git 만 믿으면 됩니다.
 
 **다른 사람 감시하기.** `.github/workflows/watch.yml` 에서 `WATCH_USER` 를 설정하거나(로컬에서는 `just watch <로그인명>`), 공개 계정이면 누구든 감시할 수 있습니다.

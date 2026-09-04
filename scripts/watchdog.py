@@ -12,9 +12,13 @@ A second, *bounded* phase enriches the roster with per-account facts
 (profile counters + last-year contribution total) into
 ``data/accounts.json``; the site turns those facts into the bot/real
 score. Every phase has hard caps — AGENTS.md §9:
+  schedule          WATCH_INTERVAL_HOURS: scheduled hours outside the
+                    every-Nth-slot gate exit in seconds without touching
+                    the API (manual/push runs are never gated)
   followers pages   MAX_PAGES (100) x PER_PAGE (100) = 10,000 rows
   retries           RETRY_DELAYS (1, 3) → 3 attempts, never unbounded
-  enrichment        WATCH_ENRICH_CAP (default 40, max 200) accounts/run
+  enrichment        WATCH_ENRICH_CAP (default 40, max 200) accounts/run,
+                    refreshed after WATCH_ENRICH_STALE_DAYS (default 30)
 
 Data layout (records live in git, written by CI only):
   data/current.json   {"schema":1,"watch":...,"profile":{...},
@@ -72,9 +76,10 @@ RETRY_DELAYS = (1, 3)  # bounded retries, never an unbounded loop
 
 ENRICH_CAP_DEFAULT = 40  # steady-state: one GraphQL batch + ~8s of parallel REST
 ENRICH_CAP_MAX = 200  # manual backfill ceiling (workflow_dispatch input)
-ENRICH_STALE_DAYS = 30  # eligible for a facts refresh after this long
-ENRICH_STALE_SECONDS = ENRICH_STALE_DAYS * 86400
+ENRICH_STALE_DAYS_DEFAULT = 30  # eligible for a facts refresh after this long
+ENRICH_STALE_DAYS_MAX = 365
 ENRICH_WORKERS = 8  # parallel profile fetches (core REST, well within limits)
+INTERVAL_HOURS_MAX = 168  # schedule gate ceiling: at most weekly
 GQL_BATCH = 40  # ~6 nodes/alias → ~250 rate-limit points per batch
 
 CONTRIBUTION_FIELDS = (
@@ -303,6 +308,7 @@ def enrich_accounts(
         return accounts, False, 0
 
     now = time.time()
+    stale_seconds = resolve_enrich_stale_days() * 86400
     missing: list[str] = []
     stale: list[str] = []
     for follower in followers:
@@ -315,8 +321,8 @@ def enrich_accounts(
         try:
             age = now - calendar.timegm(time.strptime(checked, "%Y-%m-%dT%H:%M:%SZ"))
         except (TypeError, ValueError):
-            age = ENRICH_STALE_SECONDS + 1
-        if age > ENRICH_STALE_SECONDS:
+            age = stale_seconds + 1
+        if age > stale_seconds:
             stale.append(login)
     random.shuffle(stale)
     targets = (missing + stale)[:cap]
@@ -400,10 +406,41 @@ def resolve_enrich_cap(token: str | None) -> int:
     return max(0, min(cap, ENRICH_CAP_MAX))
 
 
+def _env_int(name: str, default: int, maximum: int) -> int:
+    try:
+        return max(1, min(maximum, int(os.environ.get(name) or default)))
+    except ValueError:
+        return default
+
+
+def resolve_enrich_stale_days() -> int:
+    return _env_int("WATCH_ENRICH_STALE_DAYS", ENRICH_STALE_DAYS_DEFAULT, ENRICH_STALE_DAYS_MAX)
+
+
+def resolve_interval_hours() -> int:
+    return _env_int("WATCH_INTERVAL_HOURS", 1, INTERVAL_HOURS_MAX)
+
+
 def main() -> int:
     cli_arg = sys.argv[1] if len(sys.argv) > 1 else None
     user = resolve_target(cli_arg)
     token = os.environ.get("GITHUB_TOKEN", "").strip() or None
+
+    # Schedule self-throttle: the cron stays hourly, but on scheduled runs
+    # outside every Nth UTC hour the run exits here — no API calls, no
+    # records, no build, no deploy. Manual dispatches and master pushes are
+    # never gated (the workflow only sets WATCH_SCHEDULED on schedule).
+    if os.environ.get("WATCH_SCHEDULED", "").strip().lower() == "true":
+        interval = resolve_interval_hours()
+        if interval > 1:
+            hour = time.gmtime().tm_hour
+            if hour % interval != 0:
+                slots = ", ".join(str(h) for h in range(0, 24, interval))
+                print(
+                    f"interval {interval}h — UTC {hour:02d}:00 is not a due slot "
+                    f"(due at {slots} UTC); nothing fetched"
+                )
+                return 0
 
     profile = fetch_profile(user, token)
     followers = fetch_followers(user, token)
