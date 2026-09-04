@@ -100,7 +100,7 @@ export default defineComponent({
                 <span class="site-nav__lang-code">{current.value.native}</span>
               </button>
               {langOpen.value && (
-                <ul class="site-nav__lang-menu glass-panel" role="menu">
+                <ul class="site-nav__lang-menu" role="menu">
                   {LOCALE_OPTIONS.map((opt) => (
                     <li key={opt.code} role="none">
                       <button
