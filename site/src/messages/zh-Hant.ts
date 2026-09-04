@@ -1,0 +1,50 @@
+export default {
+  nav: {
+    language: "語言",
+    trend: "趨勢",
+    timeline: "時間軸",
+    followers: "關注者",
+    github: "GitHub",
+  },
+  hero: {
+    badge: "開源 · 每小時巡檢",
+    tagline: "每一次關注者變動，都有據可查",
+    lede: "GitHub Follower Watchdog 由 GitHub Actions 排程任務每小時檢查一次你的關注者清單，把每一次新增關注與取消關注追加記錄到保存在 git 中的日誌裡，並透過 GitHub Pages 重新發布這個頁面。",
+    updated: "{when}更新",
+    since: "自 {when} 起持續追蹤",
+    viewProfile: "查看主頁",
+    viewRepo: "GitHub",
+  },
+  stats: {
+    current: "目前關注者",
+    gained: "新增",
+    lost: "流失",
+    net: "淨變化",
+  },
+  trend: {
+    title: "關注者趨勢",
+    desc: "自開始追蹤以來的累計關注者數量",
+  },
+  timeline: {
+    title: "時間軸",
+    follow: "{name} 關注了你",
+    unfollow: "{name} 取消了關注",
+    bootstrap: "開始追蹤，當時共有 {count} 位關注者",
+    empty: "還沒有任何變動記錄 —— 下一次巡檢將在整點進行",
+    more: "已顯示最近 {shown} / 共 {total} 條事件 —— 完整記錄保存在 git 歷史中",
+  },
+  followers: {
+    title: "目前關注者",
+  },
+  states: {
+    loading: "正在讀取巡檢記錄……",
+    nodataTitle: "還沒有記錄",
+    nodataDesc: "看門狗還沒有運行過。手動觸發一次 Watch workflow（或等待下一個整點巡檢），然後重新整理本頁。",
+    errorTitle: "記錄載入失敗",
+    retry: "重試",
+  },
+  footer: {
+    license: "以 MIT 授權條款發布",
+    made: "由 GitHub Actions 與 Pages 驅動",
+  },
+} as const;

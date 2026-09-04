@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Node
+node_modules/
+site/dist/
+
+# Env — never commit real credentials (AGENTS.md §7)
+.env
+.env.*
+
+# Misc
+.DS_Store
+*.log

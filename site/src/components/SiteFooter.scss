@@ -1,0 +1,53 @@
+/* SiteFooter — quiet glass strip */
+.site-footer {
+  border-top: 1px solid var(--glass-border);
+  background: rgb(var(--color-background) / 55%);
+  backdrop-filter: blur(var(--blur-md));
+  -webkit-backdrop-filter: blur(var(--blur-md));
+
+  &__inner {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: var(--space-32) var(--space-24);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-24);
+  }
+
+  &__col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  &__brand {
+    font-size: var(--text-base);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: rgb(var(--color-text));
+  }
+
+  &__muted {
+    font-size: var(--text-xs);
+    color: rgb(var(--color-text-secondary));
+  }
+
+  &__links {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-16);
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    font-size: var(--text-sm);
+    color: rgb(var(--color-text-secondary));
+    text-decoration: none;
+    transition: color var(--duration-short) var(--ease-standard);
+
+    &:hover { color: rgb(var(--color-text)); }
+  }
+}

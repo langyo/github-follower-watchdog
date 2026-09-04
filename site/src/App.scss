@@ -1,0 +1,16 @@
+.site {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+
+  &__nav-spacer {
+    height: 4rem;
+    flex-shrink: 0;
+  }
+
+  &__main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+}

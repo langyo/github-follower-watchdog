@@ -1,0 +1,101 @@
+name: Watch
+
+# The whole product in one job, kept under a minute:
+#   schedule (hourly) → run the stdlib-only watchdog → commit the delta
+#   (records live in git) → rebuild the page only when something changed
+#   → deploy GitHub Pages. A no-change hour writes nothing, builds
+#   nothing and finishes in ~20s. A push to master (site/README edits)
+#   skips the record logic gate and redeploys the page.
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Never cancel mid-run: the commit + Pages deploy pair must not be torn.
+concurrency:
+  group: watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    name: Watch & publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      # ubuntu-latest ships Python 3 — no setup step, no pip install; the
+      # watchdog is stdlib-only by design (README "How it works").
+      - name: Run the watchdog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/watchdog.py
+
+      - name: Detect record changes
+        id: changes
+        run: |
+          if [ -n "$(git status --porcelain -- data/)" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # The records are the product: land them in git even if the site
+      # build or the Pages deploy were to fail after this step.
+      - name: Commit the records
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git commit -m "🔄 Sync follower snapshot."
+          git push
+
+      # Build + deploy when the data changed, or on any push/dispatch run
+      # (site or README edits need a redeploy even with clean data).
+      - name: Install pnpm
+        if: steps.changes.outputs.changed == 'true' || github.event_name != 'schedule'
+        uses: pnpm/action-setup@v6
+        # Version comes from the "packageManager" field in the root package.json.
+
+      - name: Install Node
+        if: steps.changes.outputs.changed == 'true' || github.event_name != 'schedule'
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
+
+      - name: Build the site
+        if: steps.changes.outputs.changed == 'true' || github.event_name != 'schedule'
+        env:
+          # Project Pages serve from /<repo>/; a custom domain would use "/".
+          SITE_BASE: /${{ github.event.repository.name }}/
+        run: |
+          pnpm -C site install --frozen-lockfile
+          pnpm -C site build
+
+      # enablement: true lets a fresh fork publish without touching
+      # Settings → Pages first.
+      - name: Configure Pages
+        if: steps.changes.outputs.changed == 'true' || github.event_name != 'schedule'
+        uses: actions/configure-pages@v6
+        with:
+          enablement: true
+
+      - name: Upload Pages artifact
+        if: steps.changes.outputs.changed == 'true' || github.event_name != 'schedule'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site/dist
+
+      - name: Deploy to GitHub Pages
+        if: steps.changes.outputs.changed == 'true' || github.event_name != 'schedule'
+        uses: actions/deploy-pages@v5

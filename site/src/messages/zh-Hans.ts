@@ -1,0 +1,50 @@
+export default {
+  nav: {
+    language: "语言",
+    trend: "趋势",
+    timeline: "时间线",
+    followers: "关注者",
+    github: "GitHub",
+  },
+  hero: {
+    badge: "开源 · 每小时巡检",
+    tagline: "每一次关注者变动，都有据可查",
+    lede: "GitHub Follower Watchdog 由 GitHub Actions 定时任务每小时检查一次你的关注者列表，把每一次新增关注与取消关注追加记录到保存在 git 中的日志里，并通过 GitHub Pages 重新发布这个页面。",
+    updated: "{when}更新",
+    since: "自 {when} 起持续追踪",
+    viewProfile: "查看主页",
+    viewRepo: "GitHub",
+  },
+  stats: {
+    current: "当前关注者",
+    gained: "新增",
+    lost: "流失",
+    net: "净变化",
+  },
+  trend: {
+    title: "关注者趋势",
+    desc: "自开始追踪以来的累计关注者数量",
+  },
+  timeline: {
+    title: "时间线",
+    follow: "{name} 关注了你",
+    unfollow: "{name} 取消了关注",
+    bootstrap: "开始追踪，当时共有 {count} 位关注者",
+    empty: "还没有任何变动记录 —— 下一次巡检将在整点进行",
+    more: "已显示最近 {shown} / 共 {total} 条事件 —— 完整记录保存在 git 历史中",
+  },
+  followers: {
+    title: "当前关注者",
+  },
+  states: {
+    loading: "正在读取巡检记录……",
+    nodataTitle: "还没有记录",
+    nodataDesc: "看门狗还没有运行过。手动触发一次 Watch workflow（或等待下一个整点巡检），然后刷新本页。",
+    errorTitle: "记录加载失败",
+    retry: "重试",
+  },
+  footer: {
+    license: "基于 MIT 许可证发布",
+    made: "由 GitHub Actions 与 Pages 驱动",
+  },
+} as const;

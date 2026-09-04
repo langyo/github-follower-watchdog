@@ -1,0 +1,50 @@
+export default {
+  nav: {
+    language: "言語",
+    trend: "トレンド",
+    timeline: "タイムライン",
+    followers: "フォロワー",
+    github: "GitHub",
+  },
+  hero: {
+    badge: "オープンソース · 毎時監視",
+    tagline: "フォロワーの変動を、すべて記録",
+    lede: "GitHub Follower Watchdog は GitHub Actions の定期実行で毎時間フォロワー一覧をチェックし、フォローとフォロー解除のすべてを git の追記専用ログに記録して、このページを GitHub Pages で再公開します。",
+    updated: "{when}に更新",
+    since: "{when}から追跡中",
+    viewProfile: "プロフィールを見る",
+    viewRepo: "GitHub",
+  },
+  stats: {
+    current: "現在のフォロワー",
+    gained: "増加",
+    lost: "減少",
+    net: "増減",
+  },
+  trend: {
+    title: "フォロワーの推移",
+    desc: "追跡開始からの累計フォロワー数",
+  },
+  timeline: {
+    title: "タイムライン",
+    follow: "{name} にフォローされました",
+    unfollow: "{name} にフォローを外されました",
+    bootstrap: "追跡を開始 — 当時 {count} 人のフォロワー",
+    empty: "まだ変動は記録されていません — 次のチェックは毎正時に行われます",
+    more: "最新 {shown} / 全 {total} 件のイベントを表示中 — 完全なログは git 履歴にあります",
+  },
+  followers: {
+    title: "現在のフォロワー",
+  },
+  states: {
+    loading: "監視レコードを取得中……",
+    nodataTitle: "まだレコードがありません",
+    nodataDesc: "ウォッチドッグはまだ実行されていません。Watch workflow を手動実行するか、次の毎時チェックをお待ちください。その後、このページを再読み込みしてください。",
+    errorTitle: "レコードを読み込めませんでした",
+    retry: "再試行",
+  },
+  footer: {
+    license: "MIT ライセンスで公開",
+    made: "GitHub Actions と Pages で運用",
+  },
+} as const;

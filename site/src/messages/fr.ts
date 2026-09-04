@@ -1,0 +1,50 @@
+export default {
+  nav: {
+    language: "Langue",
+    trend: "Tendance",
+    timeline: "Chronologie",
+    followers: "Abonnés",
+    github: "GitHub",
+  },
+  hero: {
+    badge: "Open source · veille horaire",
+    tagline: "Chaque variation d'abonné, consignée",
+    lede: "GitHub Follower Watchdog vérifie vos abonnés toutes les heures depuis une tâche planifiée GitHub Actions, enregistre chaque abonnement et désabonnement dans un journal git en ajout seul, puis republie cette page via GitHub Pages.",
+    updated: "Mis à jour {when}",
+    since: "suivi depuis {when}",
+    viewProfile: "Voir le profil",
+    viewRepo: "GitHub",
+  },
+  stats: {
+    current: "Abonnés actuels",
+    gained: "Gagnés",
+    lost: "Perdus",
+    net: "Solde",
+  },
+  trend: {
+    title: "Tendance des abonnés",
+    desc: "Nombre cumulé d'abonnés depuis le début du suivi",
+  },
+  timeline: {
+    title: "Chronologie",
+    follow: "{name} vous suit",
+    unfollow: "{name} ne vous suit plus",
+    bootstrap: "Début du suivi — {count} abonnés à l'époque",
+    empty: "Aucune variation enregistrée pour le moment — le prochain contrôle a lieu à l'heure pleine",
+    more: "Affichage des {shown} derniers événements sur {total} — le journal complet vit dans l'historique git",
+  },
+  followers: {
+    title: "Abonnés actuels",
+  },
+  states: {
+    loading: "Récupération des relevés…",
+    nodataTitle: "Aucun relevé pour le moment",
+    nodataDesc: "Le chien de garde n'a pas encore tourné. Déclenchez le workflow Watch (ou attendez la prochaine vérification horaire), puis actualisez cette page.",
+    errorTitle: "Impossible de charger les relevés",
+    retry: "Réessayer",
+  },
+  footer: {
+    license: "Sous licence MIT",
+    made: "Propulsé par GitHub Actions & Pages",
+  },
+} as const;

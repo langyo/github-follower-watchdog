@@ -1,0 +1,3 @@
+# One true line ending — the CI shell steps and the stdlib watchdog both
+# assume LF; editors follow .editorconfig, git enforces it here.
+* text=auto eol=lf

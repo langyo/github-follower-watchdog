@@ -1,0 +1,21 @@
+## Summary / 概述
+<!-- Brief description of changes / 变更简述 -->
+
+
+## Title / 标题格式
+<!-- The PR title becomes the squash subject and must follow AGENTS.md §1:
+     `<gitmoji> <One English sentence ending with a period.>`
+     No `type:` prefixes and no `Topic phrase:` colon shapes.
+     Bot PRs (dependabot etc.) are exempt. -->
+- [ ] 标题符合 `<gitmoji> <英文一句话.>` / Title follows the gitmoji rule
+
+## Checklist / 自检清单
+<!-- Before requesting review / 请求复查前请确认 -->
+- [ ] `pnpm build` passes / 通过
+- [ ] `just lint-msg` passes / 通过
+- [ ] i18n keys added for all 8 site locales if adding UI strings / 如有新增 UI 字符串，8 个语言包已同步
+- [ ] No hand-edits under `data/` — records are CI-owned / 未手工改动 `data/`（记录只由 CI 写入）
+- [ ] No secrets, real credentials, or private IPs in the diff / 无真实凭据与内网 IP（AGENTS.md §7 红线）
+
+## Related Issues / 关联 Issue
+<!-- e.g. Closes #123 -->

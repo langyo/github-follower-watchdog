@@ -1,0 +1,46 @@
+name: Commit Message Lint
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+concurrency:
+  group: commit-msg-lint-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint-commits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # The PR title becomes the squash-merge subject, so it follows the
+      # exact same rule as commit subjects (AGENTS.md §1). Bot PRs
+      # (dependabot) are exempt: machine-generated subjects cannot follow
+      # the gitmoji rule and cannot be rewritten.
+      - name: Lint PR title (squash-merge subject)
+        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]' && github.actor != 'github-actions[bot]'
+        env:
+          # Passed via env so a user-controlled title is never interpolated
+          # into shell syntax (quotes, $() and backticks are inert in env).
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: python3 scripts/commit_msg_lint.py check --subject "$PR_TITLE"
+
+      - name: Lint commit subjects in the PR
+        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]' && github.actor != 'github-actions[bot]'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          git fetch origin "$BASE_REF" --quiet || true
+          base="origin/$BASE_REF"
+          # Bot-authored commits (dependabot "Bump ..." subjects) are exempt
+          # from the gitmoji rules; filter by committer author name.
+          git log --no-merges --format='%s%x09%an' "$base..HEAD" \
+            | awk -F'\t' '$2 !~ /\[bot\]$/ { print $1 }' \
+            | python3 scripts/commit_msg_lint.py check --stdin-subjects

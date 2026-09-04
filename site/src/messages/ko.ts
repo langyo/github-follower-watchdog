@@ -1,0 +1,50 @@
+export default {
+  nav: {
+    language: "언어",
+    trend: "추세",
+    timeline: "타임라인",
+    followers: "팔로워",
+    github: "GitHub",
+  },
+  hero: {
+    badge: "오픈소스 · 매시간 확인",
+    tagline: "팔로워 변동을 하나도 놓치지 않고 기록",
+    lede: "GitHub Follower Watchdog는 GitHub Actions 스케줄 작업으로 매시간 팔로워 목록을 확인하고, 팔로우와 언팔로우를 git의 추가 전용 로그에 기록한 뒤 이 페이지를 GitHub Pages로 다시 게시합니다.",
+    updated: "{when} 업데이트",
+    since: "{when}부터 추적 중",
+    viewProfile: "프로필 보기",
+    viewRepo: "GitHub",
+  },
+  stats: {
+    current: "현재 팔로워",
+    gained: "증가",
+    lost: "감소",
+    net: "순 증감",
+  },
+  trend: {
+    title: "팔로워 추세",
+    desc: "추적 시작 이후 누적 팔로워 수",
+  },
+  timeline: {
+    title: "타임라인",
+    follow: "{name}님이 팔로우했습니다",
+    unfollow: "{name}님이 팔로우를 취소했습니다",
+    bootstrap: "추적 시작 — 당시 팔로워 {count}명",
+    empty: "아직 기록된 변동이 없습니다 — 다음 확인은 매 정시에 실행됩니다",
+    more: "최신 {shown} / 전체 {total}건의 이벤트 표시 중 — 전체 기록은 git 히스토리에 있습니다",
+  },
+  followers: {
+    title: "현재 팔로워",
+  },
+  states: {
+    loading: "감시 기록을 불러오는 중…",
+    nodataTitle: "아직 기록이 없습니다",
+    nodataDesc: "와치독이 아직 실행되지 않았습니다. Watch 워크플로를 수동으로 실행하거나 다음 매시간 확인을 기다린 뒤 이 페이지를 새로고침하세요.",
+    errorTitle: "기록을 불러오지 못했습니다",
+    retry: "다시 시도",
+  },
+  footer: {
+    license: "MIT 라이선스로 배포",
+    made: "GitHub Actions와 Pages로 구동",
+  },
+} as const;
