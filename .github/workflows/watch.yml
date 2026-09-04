@@ -68,8 +68,17 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: site/package-lock.json
+
+      # node_modules keyed on the lockfile: on a hit `npm install` below
+      # degrades to a no-op verify (~5s) instead of `npm ci` re-extracting
+      # all 130 packages (~40s) — that difference is what keeps the whole
+      # change path under a minute.
+      - name: Restore node_modules
+        if: steps.changes.outputs.changed == 'true' || github.event_name != 'schedule'
+        uses: actions/cache@v5
+        with:
+          path: site/node_modules
+          key: nodemodules-${{ runner.os }}-${{ hashFiles('site/package-lock.json') }}
 
       - name: Build the site
         if: steps.changes.outputs.changed == 'true' || github.event_name != 'schedule'
@@ -77,7 +86,11 @@ jobs:
           # Project Pages serve from /<repo>/; a custom domain would use "/".
           SITE_BASE: /${{ github.event.repository.name }}/
         run: |
-          npm ci --prefix site --ignore-scripts
+          if [ -d site/node_modules/vue ]; then
+            npm install --prefix site --prefer-offline --no-audit --no-fund --ignore-scripts
+          else
+            npm ci --prefix site --ignore-scripts
+          fi
           npm run --prefix site build
 
       # enablement: true lets a fresh fork publish without touching
