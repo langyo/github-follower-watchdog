@@ -72,8 +72,8 @@
 
 ### 验证门禁
 
-提交前按改动范围选择：`pnpm build`（site 改动，含 tsc --noEmit）、
-`python -m py_compile scripts/*.py`（watchdog 改动，另需一次真实
+提交前按改动范围选择：`npm --prefix site run build`（site 改动，含
+tsc --noEmit）、`python -m py_compile scripts/*.py`（watchdog 改动，另需一次真实
 `just watch` 干跑）、`just lint-msg`（commit 标题）必须通过。
 
 ## 4. Branch Naming & Git Push Rules
@@ -104,7 +104,7 @@
   2. **检查门槛**：必要检查通过后才可合并。**代码级失败**（tsc / vite build /
      py_compile / lint-msg）必须修复，绝不带病合并；**环境性失败**（runner
      配额、GitHub API 抖动、Pages 部署延迟等）在 PR 里记录并经本地验证
-     （`pnpm build` / `just watch`）通过后可豁免。
+     （`npm --prefix site run build` / `just watch`）通过后可豁免。
   3. **PR 节约**：不要为每个琐碎变更单独开 PR 立即合并——PR 号是有限资源。
      一个 PR 应打包一批可合并的功能；只有紧急 hotfix 才允许小 PR。
 - **`data/` 是 CI 专属写入区**：`data/current.json` 与 `data/history.jsonl`
@@ -115,8 +115,9 @@
 
 ## 6. Build & Test
 
-- Site（Vue 3 · TSX · SCSS，wowsp website 同款架构）：`pnpm -C site build`
-  （= tsc --noEmit + vite build）、`pnpm -C site dev`、`pnpm -C site preview`。
+- Site（Vue 3 · TSX · SCSS，wowsp website 同款架构）：`npm --prefix site run build`
+  （= tsc --noEmit + vite build）、`npm --prefix site run dev`、
+  `npm --prefix site run preview`。
   **禁止引入 `.vue` SFC——全程 `.tsx` + `.scss`**（用户约束，2026-09-04）。
 - Watchdog（纯 stdlib Python 3）：`python -m py_compile scripts/watchdog.py`；
   行为验证用 `just watch [login]`（写 `data/`，跑完 `git checkout -- data/`
@@ -145,9 +146,9 @@
 
 ## 8. CI 使用策略
 
-1. **不要过度依赖 CI 状态**：本地验证（`pnpm build` / `py_compile` /
-   `just watch`）+ commit/PR 标题 lint 通过即可合并；环境性失败记录到 PR
-   即可豁免（§5.2）。
+1. **不要过度依赖 CI 状态**：本地验证（`npm --prefix site run build` /
+   `py_compile` / `just watch`）+ commit/PR 标题 lint 通过即可合并；环境性失败
+   记录到 PR 即可豁免（§5.2）。
 2. **CI 是参考不是门禁**：合并前看一眼有没有**代码级失败**；有则修，全是
    环境性就直接合并。**不要长时间盯 CI**——排队或挂起超过 ~15 分钟按
    环境性处理。
@@ -180,7 +181,11 @@
 - Rust / Tauri / webui / cargo-deny / 版本一致性检查等章节全部移除——本仓
   是 stdlib Python + Vite/Vue(TSX) 两件套，无 Rust 工具链，无多包 workspace。
 - wowsp 的 `just lint` / `just test unit` 等门禁替换为 §6 的轻量门禁
-  （`pnpm build` / `py_compile` / `just watch` / `just lint-msg`）。
+  （`npm --prefix site run build` / `py_compile` / `just watch` / `just lint-msg`）。
+- **包管理器用 npm 而非 wowsp 的 pnpm**（2026-09-04 实测决策）：
+  `pnpm/action-setup` 在托管 runner 上下载 pnpm 二进制实测 2m23s、偶发挂死
+  超过 5 分钟上限，无法满足"CI 只跑一分钟"；npm 随 runner 预装、零下载，
+  `npm ci --ignore-scripts` + setup-node 缓存即可。
 - **data/ 写入主权**（§5）为本仓新增规则：记录文件只由 CI 产出，
   wowsp 无对应概念。
 - 本仓无 release 构建（无 release.yml / site.yml 拆分）：`watch.yml` 一个

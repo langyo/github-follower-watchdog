@@ -23,16 +23,16 @@ watch user='':
 #   just preview            → serve the built site locally
 
 dev:
-    pnpm -C site dev
+    npm --prefix site run dev
 
 build:
-    pnpm -C site build
+    npm --prefix site run build
 
 preview:
-    pnpm -C site preview
+    npm --prefix site run preview
 
 typecheck:
-    pnpm -C site typecheck
+    npm --prefix site run typecheck
 
 # ── lint-msg ──────────────────────────────────────────────────────────
 #   just lint-msg              → check commit subjects on master..HEAD (AGENTS.md §1)
@@ -44,7 +44,7 @@ lint-msg base='master':
 # ── init / clean ──────────────────────────────────────────────────────
 
 init:
-    pnpm -C site install
+    npm --prefix site install
 
 clean:
     -rm -rf site/dist

@@ -40,6 +40,8 @@ Fork 之後它就**屬於你**：被監看帳號從倉庫 owner 自動解析，�
 3. 透過 **Run workflow** 手動觸發一次 **Watch** workflow —— 首次執行會把你目前的關注者記錄為基線，並發布你的 Pages 站台。
 4. 開啟 `https://<你>.github.io/github-follower-watchdog/` —— 此後它每小時自動重新整理。
 
+如果首次執行在 *Configure Pages* 一步失敗 —— GitHub 偶爾會拒絕讓 workflow 權杖建立站台 —— 只需在 **Settings → Pages → Source: GitHub Actions** 手動啟用一次，再重新執行 workflow 即可。
+
 想監看其他公開帳號，在 `.github/workflows/watch.yml` 裡設定 `WATCH_USER` 即可。
 
 ## 工作原理
@@ -52,11 +54,11 @@ Fork 之後它就**屬於你**：被監看帳號從倉庫 owner 自動解析，�
 ## 本地開發
 
 ```bash
-pnpm -C site install   # 首次
-just watch             # 跑一次 watchdog（目標：origin owner，或直接傳登入名）
-just dev               # 站點開發伺服器 :5174
-just build             # 類型檢查 + 生產建構
-just lint-msg          # 校驗 master..HEAD 的 commit 標題（AGENTS.md §1）
+npm --prefix site install   # 首次
+just watch                  # 跑一次 watchdog（目標：origin owner，或直接傳登入名）
+just dev                    # 站點開發伺服器 :5174
+just build                  # 類型檢查 + 生產建構
+just lint-msg               # 校驗 master..HEAD 的 commit 標題（AGENTS.md §1）
 ```
 
 本地 `GITHUB_TOKEN` 可選 —— 它把 API 限額從每小時 60 次提升到 5000 次。
