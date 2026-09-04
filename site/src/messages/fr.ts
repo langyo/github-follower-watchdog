@@ -35,6 +35,26 @@ export default {
   },
   followers: {
     title: "Abonnés actuels",
+    assessed: "{assessed} comptes sur {total} évalués",
+    emptyGroup: "Aucun abonné dans ce groupe",
+    groups: {
+      all: "Tous",
+      real: "Réels",
+      uncertain: "Incertains",
+      suspect: "Suspects",
+      unassessed: "Non évalués",
+    },
+    tip: {
+      score: "Score",
+      contribs: "Contributions (1 an)",
+      repos: "Dépôts publics",
+      following: "Abonnements",
+      followers: "Abonnés",
+      since: "Inscrit",
+      unknown: "inconnu",
+      nofacts: "Pas encore évalué — les données sont collectées progressivement",
+      missing: "Ce compte n'existe plus sur GitHub",
+    },
   },
   states: {
     loading: "Récupération des relevés…",

@@ -107,10 +107,10 @@ tsc --noEmit）、`python -m py_compile scripts/*.py`（watchdog 改动，另需
      （`npm --prefix site run build` / `just watch`）通过后可豁免。
   3. **PR 节约**：不要为每个琐碎变更单独开 PR 立即合并——PR 号是有限资源。
      一个 PR 应打包一批可合并的功能；只有紧急 hotfix 才允许小 PR。
-- **`data/` 是 CI 专属写入区**：`data/current.json` 与 `data/history.jsonl`
-  只能由 `.github/workflows/watch.yml` 里的 `scripts/watchdog.py` 产出。
-  任何 PR 不得手改、格式化、重排或"修复"这两个文件；发现脏数据应修
-  watchdog 的写入逻辑，而不是修文件本身。
+- **`data/` 是 CI 专属写入区**：`data/current.json`、`data/history.jsonl` 与
+  `data/accounts.json` 只能由 `.github/workflows/watch.yml` 里的
+  `scripts/watchdog.py` 产出。任何 PR 不得手改、格式化、重排或"修复"这三个
+  文件；发现脏数据应修 watchdog 的写入逻辑，而不是修文件本身。
 - **只在被要求或已批准的工作流步骤里创建 PR**；未经许可不得自发开 PR。
 
 ## 6. Build & Test
@@ -121,7 +121,8 @@ tsc --noEmit）、`python -m py_compile scripts/*.py`（watchdog 改动，另需
   **禁止引入 `.vue` SFC——全程 `.tsx` + `.scss`**（用户约束，2026-09-04）。
 - Watchdog（纯 stdlib Python 3）：`python -m py_compile scripts/watchdog.py`；
   行为验证用 `just watch [login]`（写 `data/`，跑完 `git checkout -- data/`
-  还原，避免把本地数据带进 PR）。
+  还原，避免把本地数据带进 PR）。账号富集（评分事实）只在环境变量
+  `GITHUB_TOKEN` 存在时运行。
 - Lint：`just lint-msg`（commit 标题，AGENTS.md §1）。
 - 新增 site UI 字符串必须同步补全 `site/src/messages/` 下全部 8 个语言包
   （en, zh-Hans, zh-Hant, ja, ko, fr, es, ru），缺 key 会回退英文但视为
@@ -173,6 +174,9 @@ tsc --noEmit）、`python -m py_compile scripts/*.py`（watchdog 改动，另需
 2. 失败重试必须带**次数上限**（`RETRY_DELAYS = (1, 3)`，共 3 次尝试），
    **禁止无上限重试循环**。
 3. 任何新增的批量拉取 / 下载类脚本沿用同样模式，先报量再动手。
+4. 账号资料富集沿用同一纪律：每运行最多 `WATCH_ENRICH_CAP`（默认 40，
+   上限 200）个账号、GraphQL 单查询批 `GQL_BATCH = 40` 个别名、
+   `ENRICH_STALE_DAYS = 30` 天的刷新窗口；富集失败只降级不阻塞快照。
 
 ## 10. 与 wowsp AGENTS.md 的差异记录
 

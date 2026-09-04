@@ -35,6 +35,26 @@ export default {
   },
   followers: {
     title: "현재 팔로워",
+    assessed: "{total}개 중 {assessed}개 계정 평가 완료",
+    emptyGroup: "이 그룹에는 팔로워가 없습니다",
+    groups: {
+      all: "전체",
+      real: "실제",
+      uncertain: "불확실",
+      suspect: "봇 의심",
+      unassessed: "미평가",
+    },
+    tip: {
+      score: "점수",
+      contribs: "기여 수(최근 1년)",
+      repos: "공개 저장소",
+      following: "팔로잉",
+      followers: "팔로워",
+      since: "가입일",
+      unknown: "알 수 없음",
+      nofacts: "아직 평가되지 않았습니다 — 정보는 조금씩 수집됩니다",
+      missing: "이 계정은 GitHub 에서 삭제되었습니다",
+    },
   },
   states: {
     loading: "감시 기록을 불러오는 중…",

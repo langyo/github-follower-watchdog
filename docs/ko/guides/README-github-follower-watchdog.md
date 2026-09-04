@@ -31,25 +31,50 @@ GitHub Follower Watchdog는 저장소 안에서만 완전히 돌아가는 서버
 
 3. **Pages 로 게시되는 대시보드** —— 변동이 있을 때마다 단일 페이지 대시보드(Vue 3 · TSX · SCSS · vue-i18n, 8개 언어, 다크 & 라이트)가 재배포되어 팔로워 수 추이, 팔로우/언팔로우 타임라인, 현재 명단을 보여줍니다.
 
-Fork 하면 **당신의 것**이 됩니다: 감시 대상 계정은 저장소 owner에서 자동으로 결정되고, 물려받은 기록은 fork 첫 실행 시 초기화되며, 같은 workflow가 fork의 GitHub Pages를 자동으로 활성화하고 배포합니다. 프런트엔드 구조, 빌드 기반, 저장소 규약은 [wowsp](https://github.com/langyo/wowsp)에서 가져왔습니다.
+나아가 watchdog 는 엄격한 API 한도 안에서 **팔로워 각자의 프로필을 수집**하고(최근 1년 기여 수, 팔로잉/팔로워 비율, 공개 저장소 수, 프로필 완성도, 계정 나이), 대시보드는 그 사실을 설명 가능한 0–100 점수로 바꿔 실제 사람과 대량 팔로우 봇 의심 계정을 구분합니다.
+
+Fork 하면 **당신의 것**이 됩니다: 감시 대상 계정은 저장소 owner에서 자동으로 결정되고, 물려받은 기록은 fork 첫 실행 시 초기화되며, 같은 workflow가 fork의 GitHub Pages를 자동으로 활성화하고 배포합니다.
 
 ## 빠른 시작
 
-1. 이 저장소를 fork 합니다.
-2. fork 에서 **Actions** 를 활성화합니다 —— GitHub 는 새 fork 의 workflow를 기본적으로 비활성화합니다(Repository → Actions → "I understand my workflows, go ahead and enable them").
-3. **Run workflow** 로 **Watch** workflow를 한 번 실행합니다 —— 첫 실행이 현재 팔로워를 기준선으로 기록하고 Pages 사이트를 게시합니다.
-4. `https://<you>.github.io/github-follower-watchdog/` 를 엽니다 —— 이후 매시간 자동으로 새로고침됩니다.
+Fork 후 아래를 따르면 됩니다. 2분 정도 걸립니다.
 
-만약 첫 실행이 *Configure Pages* 단계에서 실패하면 —— GitHub 가 workflow 토큰의 사이트 생성을 거부하는 경우가 있습니다 —— **Settings → Pages → Source: GitHub Actions** 에서 한 번 활성화한 뒤 workflow를 다시 실행하세요.
+1. **저장소를 fork** —— 이름은 자유입니다. 이 가이드는 `github-follower-watchdog` 이름을 그대로 유지한다고 가정합니다.
 
-자신 이외의 공개 계정을 감시하려면 `.github/workflows/watch.yml`에서 `WATCH_USER`를 설정하세요.
+2. **fork 에서 Actions 활성화** —— 브라우저에서 `https://github.com/<you>/github-follower-watchdog/actions` 를 엽니다. GitHub 는 새 fork 의 workflow를 기본적으로 비활성화하므로 **I understand my workflows, go ahead and enable them** 을 클릭합니다.
+
+3. **첫 점검 실행** —— 같은 Actions 페이지 왼쪽 사이드바에서 **Watch** 선택 → **Run workflow** → **Run workflow**. (실제/봇 점수를 더 빨리 채우려면 *Max accounts to enrich* 값을 올리세요.) 첫 실행이 현재 팔로워를 기준선으로 기록하고 사이트를 게시합니다.
+
+4. **대시보드 열기** —— `https://<you>.github.io/github-follower-watchdog/`. 이후 매시간, 데이터가 바뀐 경우에만 자동으로 다시 배포됩니다.
+
+첫 실행이 *Configure Pages* 단계에서 멈춘다면 —— GitHub 가 workflow 토큰의 사이트 생성을 거부하는 경우가 있습니다 —— `https://github.com/<you>/github-follower-watchdog/settings/pages` 를 열어 **Source** 를 **GitHub Actions** 로 설정한 뒤 **Watch** 를 한 번 더 실행하세요.
+
+**데이터의 위치.** `data/current.json` 은 최신 명단, `data/history.jsonl` 은 추가 전용 팔로우/언팔로우 로그, `data/accounts.json` 은 점수의 근거가 되는 계정 사실입니다. 셋 모두 CI 만 쓰고 fork 에 커밋됩니다 —— `git log -- data/` 가 완전한 감사 기록입니다. 외부 서비스도 데이터베이스도 없이 git 만 믿으면 됩니다.
+
+**다른 사람 감시하기.** `.github/workflows/watch.yml` 에서 `WATCH_USER` 를 설정하거나(로컬에서는 `just watch <로그인명>`), 공개 계정이면 누구든 감시할 수 있습니다.
 
 ## 동작 방식
 
-- `scripts/watchdog.py` —— 가져오기의 전부: 상한 있는 페이징, 원자적 쓰기, 스냅샷 먼저·히스토리 나중의 순서(크래시가 나도 타임라인 한 줄만 잃고 이벤트가 중복되지는 않음), 그리고 어떤 API 실패에도 "아무것도 쓰지 않는" 철칙.
-- `data/current.json` + `data/history.jsonl` —— 기록 그 자체. **CI 만 씁니다**(AGENTS.md §5). 변동 1회 = 추가 1회 + 커밋 1회.
-- `.github/workflows/watch.yml` —— 매시간 cron + 수동 + push: watchdog → 변화가 있으면 커밋 → 사이트 빌드 → Pages 배포. 변화가 없는 시간대는 빌드를 건너뛰어 약 20초, 변화가 있는 경로도 1분 이내입니다.(GitHub 는 저장소가 60일간 비활동이면 스케줄 작업을 비활성화합니다 —— 데이터 커밋 자체가 활동입니다.)
-- `site/` —— 대시보드. Vite + Vue 3 TSX(`.vue` SFC 없음)+ SCSS + vue-i18n, wowsp website 와 같은 구조. 기록은 공개 에셋으로 그대로 번들에 복사되어 런타임에 가져오므로, 데이터만 바뀌면 앱을 다시 빌드할 필요가 없습니다.
+- `scripts/watchdog.py` —— 가져오기의 전부: 상한 있는 페이징, 원자적 쓰기, 스냅샷 먼저·히스토리 나중의 순서(크래시가 나도 타임라인 한 줄만 잃고 이벤트가 중복되지는 않음), 그리고 어떤 API 실패에도 "아무것도 쓰지 않는" 철칙. 두 번째 단계는 베스트 에포트 프로필 수집입니다: 매번의 실행에서 최대 `WATCH_ENRICH_CAP`(기본 40, 상한 200)개 계정을 REST 사용자 엔드포인트와 1회의 배치 GraphQL 쿼리로 가져오고, 사실이 바뀐 경우에만 기록합니다.
+- `data/current.json` + `data/history.jsonl` + `data/accounts.json` —— 기록 그 자체. **CI 만 씁니다**(AGENTS.md §5).
+- `.github/workflows/watch.yml` —— 매시간 cron + 수동 + push: watchdog → 변화가 있으면 커밋 → 사이트 빌드 → Pages 배포. 변화가 없는 시간대는 빌드를 건너뛰어 약 20초, 변화가 있는 경로도 1분 정도입니다.(GitHub 는 저장소가 60일간 비활동이면 스케줄 작업을 비활성화합니다 —— 데이터 커밋 자체가 활동입니다.)
+- `site/` —— 대시보드. Vite + Vue 3 TSX(`.vue` SFC 없음)+ SCSS + vue-i18n, 8개 언어. 기록은 공개 에셋으로 그대로 번들에 복사되어 런타임에 가져오므로, 데이터만 바뀌면 앱을 다시 빌드할 필요가 없습니다. 점수 계산은 전부 브라우저 쪽(`site/src/data/scoring.ts`)에서 이루어집니다.
+
+## 점수 모델
+
+점수는 의도적으로 설명 가능하게 설계되었습니다 —— 실제 사람의 전형적인 신호로 가산하고, 봇의 전형적인 형태에 곱셈 페널티를 적용합니다:
+
+| 신호 | 배점 |
+| --- | --- |
+| 팔로잉/팔로워 균형(팔로잉 0, 또는 비율 ≤ 2) | 최대 +25 |
+| 최근 1년 기여 수(GraphQL) | 최대 +30 |
+| 공개 저장소 수 | 최대 +15 |
+| 프로필 완성도(이름·소개·회사·위치·블로그) | 최대 +10 |
+| 계정 나이 | 최대 +15 |
+| 대량 팔로우 형태(팔로잉 ≥ 500 이고 팔로워 < 50) | × 0.5 |
+| 빈 계정 형태(기여 0 이고 저장소 0) | × 0.6 |
+
+대시보드에서 **실제**(≥ 60), **불확실**(30–59), **봇 의심**(< 30) 세 그룹으로 필터링할 수 있습니다. 프로필은 무작위로 조금씩 새로 고쳐지며(매시간 약 40개 계정), API 한도를 넘지 않으면서 최신 상태를 유지합니다.
 
 ## 로컬 개발
 
@@ -61,14 +86,10 @@ just build                  # 타입 검사 + 프로덕션 빌드
 just lint-msg               # master..HEAD 커밋 제목 검사(AGENTS.md §1)
 ```
 
-로컬의 `GITHUB_TOKEN`은 선택 사항입니다 —— API 한도를 매시간 60회에서 5000회로 올려줍니다.
+팔로워 목록 조회만이라면 `GITHUB_TOKEN`은 선택 사항이지만, 계정 프로필 수집(＝점수)은 토큰이 있을 때만 동작합니다 —— `export GITHUB_TOKEN=$(gh auth token)`.
 
 ## 문서
 
 각 언어의 README 는 [`docs/`](../../)에 있습니다(`docs/<lang>/guides/README-github-follower-watchdog.md`, 영어 외 8개 언어). AI 에이전트와 사람 기여자 모두를 위한 저장소 규약은 [`AGENTS.md`](../../../AGENTS.md)를 참고하세요.
 
 소스: [langyo/github-follower-watchdog](https://github.com/langyo/github-follower-watchdog).
-
-## 상태
-
-🎉 **가동 중** —— 매시간 점검, git 기록, Pages 대시보드가 모두 가동 중이며, workflow는 새 fork 에서도 Pages를 자동 활성화합니다. 로드맵은 의도적으로 짧게: 페이지 언어 추가와 webhook 기반 즉시 모드만이 목록에 있습니다.

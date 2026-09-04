@@ -35,6 +35,26 @@ export default {
   },
   followers: {
     title: "現在のフォロワー",
+    assessed: "{total} 件中 {assessed} 件のアカウントを評価済み",
+    emptyGroup: "このグループにフォロワーはいません",
+    groups: {
+      all: "すべて",
+      real: "実在",
+      uncertain: "要確認",
+      suspect: "ボット疑い",
+      unassessed: "未評価",
+    },
+    tip: {
+      score: "スコア",
+      contribs: "貢献数（直近 1 年）",
+      repos: "公開リポジトリ",
+      following: "フォロー中",
+      followers: "フォロワー",
+      since: "登録日",
+      unknown: "不明",
+      nofacts: "未評価 — 情報は少しずつ収集されます",
+      missing: "このアカウントは GitHub から削除されました",
+    },
   },
   states: {
     loading: "監視レコードを取得中……",

@@ -1,13 +1,18 @@
 /** Watch-record loading and derivation.
  *
- * The runner (scripts/watchdog.py) keeps two files under `data/` (copied
+ * The runner (scripts/watchdog.py) keeps three files under `data/` (copied
  * verbatim into the Pages artifact by vite's publicDir):
  *
- *   current.json   the latest snapshot — watched profile + full follower list
- *   history.jsonl  append-only event log — one JSON object per line
+ *   current.json    the latest snapshot — watched profile + full follower list
+ *   history.jsonl   append-only event log — one JSON object per line
+ *   accounts.json   per-account facts (bounded enrichment) the score is
+ *                   computed from — see data/scoring.ts
  *
- * Everything the page shows (stats, sparkline, timeline) is derived here,
- * client-side, so publishing a new hour never rebuilds the app bundle. */
+ * Everything the page shows (stats, sparkline, timeline, scores) is
+ * derived here, client-side, so publishing a new hour never rebuilds the
+ * app bundle. */
+
+import type { AccountFacts } from "./scoring";
 
 export interface FollowerEntry {
   login: string;
@@ -34,6 +39,8 @@ export interface CurrentDoc {
   followers: FollowerEntry[];
 }
 
+export type AccountMap = Record<string, AccountFacts>;
+
 export interface SeriesPoint {
   ts: string;
   count: number;
@@ -42,6 +49,7 @@ export interface SeriesPoint {
 export interface WatchData {
   current: CurrentDoc;
   events: WatchEvent[];
+  accounts: AccountMap;
   /** First recorded event timestamp (the bootstrap). */
   since: string;
   gained: number;
@@ -89,6 +97,18 @@ export async function loadWatchData(): Promise<WatchData> {
     }
   }
 
+  // Optional file: absent until the first enrichment run produces it.
+  let accounts: AccountMap = {};
+  const accountsResp = await fetchDoc("accounts.json");
+  if (accountsResp.ok) {
+    try {
+      const doc = (await accountsResp.json()) as { accounts?: AccountMap };
+      accounts = doc.accounts ?? {};
+    } catch {
+      /* malformed enrichment file — degrade to unassessed */
+    }
+  }
+
   const gained = events.filter((e) => e.type === "follow").length;
   const lost = events.filter((e) => e.type === "unfollow").length;
   const since = events.length ? events[0].ts : current.updated_at;
@@ -105,5 +125,5 @@ export async function loadWatchData(): Promise<WatchData> {
   }
   series.push({ ts: new Date().toISOString(), count: current.followers.length });
 
-  return { current, events, since, gained, lost, series };
+  return { current, events, accounts, since, gained, lost, series };
 }

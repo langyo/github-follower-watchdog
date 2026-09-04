@@ -10,6 +10,11 @@ on:
   schedule:
     - cron: "0 * * * *"
   workflow_dispatch:
+    inputs:
+      enrich-cap:
+        description: "Max accounts to enrich this run (default 40, max 200)"
+        default: "40"
+        type: string
   push:
     branches: [master]
 
@@ -36,6 +41,7 @@ jobs:
       - name: Run the watchdog
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WATCH_ENRICH_CAP: ${{ github.event.inputs.enrich-cap || '40' }}
         run: python3 scripts/watchdog.py
 
       - name: Detect record changes
