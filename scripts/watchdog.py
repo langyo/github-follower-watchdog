@@ -26,7 +26,7 @@ Data layout (records live in git, written by CI only):
   data/history.jsonl  one JSON event per line, append-only:
                        {"ts":...,"type":"bootstrap","count":N}
                        {"ts":...,"type":"follow"|"unfollow","login":...,"id":...}
-  data/accounts.json  {"schema":1,"accounts":{"<login>":{facts...}}} —
+  data/accounts.json  {"schema":2,"watch":<owner>,"accounts":{"<login>":{...}}}
                        facts: followers, following, public_repos,
                        created_at, contributions (last year, nullable),
                        profile_fields (present public profile bits),
@@ -34,6 +34,15 @@ Data layout (records live in git, written by CI only):
                        Written only when a fact actually changed, so
                        quiet hours stay commit-free; stale entries are
                        re-sampled randomly at the cap rate.
+
+Fork takeover (why accounts.json carries a watch stamp): a fresh fork
+inherits the upstream records. The first run under a new owner detects
+the mismatch in both stamps and fully overwrites — fresh timeline, a
+history log truncated to its own bootstrap line, an empty scored-roster
+file. That bootstrap run only establishes the follower list; profile
+scoring starts on the next run and proceeds in cap-sized batches, so an
+API failure mid-batch simply stops the phase and the remaining accounts
+are picked up on a later run.
 
 Watch target resolution order (the fork story — README "Quick start"):
   1. CLI argument (``just watch <login>``).
@@ -97,6 +106,7 @@ HISTORY_PATH = DATA_DIR / "history.jsonl"
 ACCOUNTS_PATH = DATA_DIR / "accounts.json"
 
 SCHEMA = 1
+ACCOUNTS_SCHEMA = 2  # schema 2 stamps the owning watch user on the file
 
 
 def resolve_target(cli_arg: str | None) -> str:
@@ -293,6 +303,30 @@ def append_history(events: list[dict[str, Any]]) -> None:
             fh.write(json.dumps(event, ensure_ascii=False, separators=(",", ":")) + "\n")
 
 
+def load_accounts(user: str) -> tuple[dict[str, Any], bool, str]:
+    """Load data/accounts.json, enforcing ownership (fork takeover).
+
+    Returns (accounts, changed, note). A file stamped with another watch
+    user is a fork inheritance: reset to empty so the new owner's roster
+    is scored from scratch. A legacy unstamped file (schema 1) is adopted
+    and stamped on the next write instead of discarded.
+    """
+    doc = load_json(ACCOUNTS_PATH)
+    if doc is None:
+        return {}, False, ""
+    raw = doc.get("accounts")
+    accounts = raw if isinstance(raw, dict) else {}
+    if "watch" not in doc:
+        return accounts, True, "adopted and stamped (was pre-schema-2)"
+    if doc["watch"] != user:
+        print(
+            f"accounts.json belongs to {doc['watch']!r} — resetting it for {user!r}; "
+            "scoring restarts from scratch"
+        )
+        return {}, True, "reset for new watch target"
+    return accounts, False, ""
+
+
 def enrich_accounts(
     accounts: dict[str, Any], followers: list[dict[str, Any]], token: str | None, cap: int
 ) -> tuple[dict[str, Any], bool, int]:
@@ -340,7 +374,8 @@ def enrich_accounts(
 
     changed = False
     fetched = 0
-    aborted = False
+    aborted = ""
+    failures = 0  # consecutive unreachable fetches → stop, resume next run
     # Waves bounded at GQL_BATCH keep the eager-submit blast radius of an
     # abort to a single wave instead of the whole cap.
     with ThreadPoolExecutor(max_workers=ENRICH_WORKERS) as pool:
@@ -356,11 +391,22 @@ def enrich_accounts(
                             accounts[login] = {"checked_at": _iso_now(), "missing": True}
                             changed = True
                         fetched += 1
+                        failures = 0
                     elif reason == "rate-limited":
-                        aborted = True
+                        aborted = "API rate limit reached"
                         break
-                    continue  # transient failure: leave the entry stale, retry next run
+                    else:
+                        # Transient/unreachable: skip this account, but if a
+                        # whole run of them fail in a row the API is effectively
+                        # down — stop the phase; the remaining accounts are
+                        # still eligible and get scanned on a later run.
+                        failures += 1
+                        if failures >= ENRICH_WORKERS:
+                            aborted = "API unreachable — remaining accounts resume next run"
+                            break
+                    continue
                 fetched += 1
+                failures = 0
                 previous = accounts.get(login) or {}
                 if login in contributions:
                     # Fresh GraphQL number; when a batch failed this run, carry
@@ -386,7 +432,7 @@ def enrich_accounts(
             if aborted:
                 break
     if aborted:
-        print("enrichment stopped early — API rate limit reached")
+        print(f"enrichment stopped early — {aborted}")
 
     return accounts, changed, fetched
 
@@ -448,14 +494,15 @@ def main() -> int:
 
     prev = load_json(CURRENT_PATH)
     if prev is not None and prev.get("watch") != user:
-        # A fork keeps the upstream data files; the first run on a new owner
-        # starts a fresh timeline instead of drowning it in "unfollows".
+        # A fork inherits the upstream records; the first run under a new
+        # owner starts a fresh timeline instead of drowning it in "unfollows".
         print(
             f"watch target changed ({prev.get('watch')!r} -> {user!r}); "
             "starting a fresh timeline"
         )
         prev = None
 
+    fresh_log = prev is None  # ownership takeover or very first run
     if prev is None:
         events: list[dict[str, Any]] = [
             {"ts": now, "type": "bootstrap", "count": len(followers)}
@@ -470,17 +517,20 @@ def main() -> int:
             + [{"ts": now, "type": "unfollow", **f} for f in lost]
         )
 
-    # Enrichment runs on every successful fetch (even no-change hours) so a
-    # fresh fork's scores backfill gradually; it never blocks the snapshot.
-    accounts_doc = load_json(ACCOUNTS_PATH)
-    accounts_raw = accounts_doc.get("accounts") if accounts_doc else None
-    accounts: dict[str, Any] = accounts_raw if isinstance(accounts_raw, dict) else {}
+    # A bootstrap run only establishes the roster — scoring starts on the
+    # next run, so the most critical run stays fast and minimal-risk.
+    accounts, accounts_reset, accounts_note = load_accounts(user)
+    if accounts_note:
+        print(f"accounts.json: {accounts_note}")
     cap = resolve_enrich_cap(token)
-    if cap == 0 and not token:
+    if fresh_log:
+        cap = 0
+        print("roster only this run — profile scoring starts on the next run")
+    elif cap == 0 and not token:
         print("enrichment skipped — set GITHUB_TOKEN to collect account facts")
     accounts, accounts_changed, enriched = enrich_accounts(accounts, followers, token, cap)
 
-    if prev is not None and not events and not accounts_changed:
+    if not fresh_log and not events and not accounts_changed and not accounts_reset:
         print(f"no changes — {len(followers)} followers, nothing written")
         return 0
 
@@ -495,9 +545,23 @@ def main() -> int:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     write_json_atomic(CURRENT_PATH, current)
     if events:
-        append_history(events)
-    if accounts_changed:
-        write_json_atomic(ACCOUNTS_PATH, {"schema": SCHEMA, "accounts": accounts})
+        if fresh_log:
+            # New ownership: the log restarts from this run's bootstrap line
+            # instead of appending to the inherited upstream history.
+            HISTORY_PATH.write_text(
+                "".join(
+                    json.dumps(e, ensure_ascii=False, separators=(",", ":")) + "\n"
+                    for e in events
+                ),
+                encoding="utf-8",
+            )
+        else:
+            append_history(events)
+    if accounts_reset or accounts_changed:
+        write_json_atomic(
+            ACCOUNTS_PATH,
+            {"schema": ACCOUNTS_SCHEMA, "watch": user, "accounts": accounts},
+        )
 
     if prev is None:
         print(f"bootstrap — recorded {len(followers)} followers for {user}")

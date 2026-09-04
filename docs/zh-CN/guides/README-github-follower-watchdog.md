@@ -77,7 +77,7 @@ WATCH_ENRICH_CAP=200 just watch        # 重复运行直到输出 "no changes"
 
 ## 工作原理
 
-- `scripts/watchdog.py` —— 抓取器的全部：有界分页、原子写入、先写快照后写历史的顺序（崩溃最多丢一条时间线，绝不重复事件），以及任何 API 失败都"不写任何数据"的铁律。第二阶段为尽力而为的资料富集：每次运行最多处理 `WATCH_ENRICH_CAP`（默认 40，上限 200）个账号，走 REST 用户接口加一次批量 GraphQL 查询，只有事实变化才落盘。
+- `scripts/watchdog.py` —— 抓取器的全部：有界分页、原子写入、先写快照后写历史的顺序（崩溃最多丢一条时间线，绝不重复事件），以及任何 API 失败都"不写任何数据"的铁律。第二阶段为尽力而为的资料富集：每次运行最多处理 `WATCH_ENRICH_CAP`（默认 40，上限 200）个账号，走 REST 用户接口加一次批量 GraphQL 查询，只有事实变化才落盘。富集碰到 API 失败会自行停止，剩余账号在下次运行续扫；全新 fork 先记录名单，下一次运行才开始评分。
 - `data/current.json` + `data/history.jsonl` + `data/accounts.json` —— 记录本体；**只由 CI 写入**（AGENTS.md §5）。
 - `.github/workflows/watch.yml` —— 每小时 cron + 手动 + push：watchdog → 有变化则提交 → 构建站点 → 部署 Pages。无变化的小时跳过构建，~20 秒收工；有变化的路径约一分钟。（GitHub 会在仓库 60 天无活动后停用定时任务 —— 数据提交本身就是活动。）
 - `site/` —— 仪表盘。Vite + Vue 3 TSX（无 `.vue` SFC）+ SCSS + vue-i18n，8 种语言。记录以公共资源形式原样拷贝进构建产物、由页面运行时拉取，纯数据变动永远不需要重新构建应用；评分完全在浏览器端计算（`site/src/data/scoring.ts`）。
