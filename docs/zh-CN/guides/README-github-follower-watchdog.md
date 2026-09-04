@@ -49,6 +49,17 @@ Fork 之后照做，全程约两分钟。
 
 如果首次运行在 *Configure Pages* 一步停下 —— GitHub 偶尔会拒绝让 workflow 令牌创建站点 —— 打开 `https://github.com/<你>/github-follower-watchdog/settings/pages`，把 **Source** 设为 **GitHub Actions**，再跑一次 **Watch** 即可。
 
+**更快填满评分（可选但推荐）。** Actions 的 `GITHUB_TOKEN` 限额比你自己的 token 紧得多，而且 CI 每小时最多只富集 `WATCH_ENRICH_CAP`（默认 40）个账号 —— 关注者不多时只是缓慢预热；关注者上千时，这意味着几十个小时的 CI 都在节流请求里磨回填，评分卡片才能全部点亮。建议直接在本机先跑第一遍，哪怕 fork 后什么都还没启用：
+
+```bash
+git clone https://github.com/<你>/github-follower-watchdog
+cd github-follower-watchdog && npm --prefix site install
+export GITHUB_TOKEN=$(gh auth token)   # 你自己的 token：每小时 5000 次
+WATCH_ENRICH_CAP=200 just watch        # 重复运行直到输出 "no changes"
+```
+
+然后把生成的 `data/` 记录提交到分支、开 PR 并合并 —— 下一个整点巡检会直接采用该文件，只刷新过期部分。
+
 **数据存在哪里。** `data/current.json` 是最新名单，`data/history.jsonl` 是只增不改的关注/取关日志，`data/accounts.json` 存放评分背后的账号事实。三者都只由 CI 写入并提交到你的 fork —— `git log -- data/` 就是完整的审计线：没有外部服务、没有数据库，只需要信任 git。
 
 **监看别人。** 在 `.github/workflows/watch.yml` 里设置 `WATCH_USER`（或在本地 `just watch <登录名>` 传参），即可监看任意公开账号。

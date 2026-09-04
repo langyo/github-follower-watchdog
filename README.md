@@ -49,6 +49,17 @@ Everything below takes about two minutes after forking.
 
 If the first run stops at the *Configure Pages* step — GitHub occasionally refuses to let the workflow token create the site — open `https://github.com/<you>/github-follower-watchdog/settings/pages`, set **Source → GitHub Actions**, and run **Watch** once more.
 
+**Filling the scores faster (optional but recommended).** The Actions token lives under tighter rate limits than your own, and CI enriches at most `WATCH_ENRICH_CAP` (default 40) accounts per hourly run. With a small roster that is a gentle warm-up — with a thousand followers it means roughly 25 hours of CI runs grinding through throttled backfill requests before every card carries a score. Do the first pass on your own machine instead, even before enabling anything:
+
+```bash
+git clone https://github.com/<you>/github-follower-watchdog
+cd github-follower-watchdog && npm --prefix site install
+export GITHUB_TOKEN=$(gh auth token)   # your own token: 5000 req/hour
+WATCH_ENRICH_CAP=200 just watch        # rerun until it reports "no changes"
+```
+
+Then commit the produced `data/` records on a branch, open a PR and merge it — the next hourly run adopts the file and only refreshes what went stale.
+
 **Where the data lives.** `data/current.json` is the latest roster, `data/history.jsonl` is the append-only follow/unfollow log, and `data/accounts.json` holds the per-follower facts behind the scores. All three are written only by CI and committed to your fork, so `git log -- data/` is the complete audit trail — no external service, no database, nothing to trust but git.
 
 **Watching someone else.** Set `WATCH_USER` in `.github/workflows/watch.yml` (or pass the account as the `just watch <login>` argument locally) to monitor any public account instead of your own.
