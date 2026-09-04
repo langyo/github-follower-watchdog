@@ -40,6 +40,8 @@ Fork すれば**あなたのもの**になります：監視対象アカウン�
 3. **Run workflow** から **Watch** workflow を一度実行します —— 初回実行が現在のフォロワーをベースラインとして記録し、Pages サイトを公開します。
 4. `https://<あなた>.github.io/github-follower-watchdog/` を開きます —— 以後、毎時間自動で更新されます。
 
+もし初回実行が *Configure Pages* で失敗したら —— GitHub が workflow トークンによるサイト作成を拒むことがあります —— **Settings → Pages → Source: GitHub Actions** で一度有効化してから workflow を再実行してください。
+
 自分以外の公開アカウントを監視したい場合は、`.github/workflows/watch.yml` の `WATCH_USER` を設定してください。
 
 ## 仕組み
@@ -52,11 +54,11 @@ Fork すれば**あなたのもの**になります：監視対象アカウン�
 ## ローカル開発
 
 ```bash
-pnpm -C site install   # 初回のみ
-just watch             # watchdog を 1 回実行（対象: origin owner、またはログイン名を指定）
-just dev               # サイトの開発サーバー :5174
-just build             # 型チェック + 本番ビルド
-just lint-msg          # master..HEAD のコミットタイトルを検証（AGENTS.md §1）
+npm --prefix site install   # 初回のみ
+just watch                  # watchdog を 1 回実行（対象: origin owner、またはログイン名を指定）
+just dev                    # サイトの開発サーバー :5174
+just build                  # 型チェック + 本番ビルド
+just lint-msg               # master..HEAD のコミットタイトルを検証（AGENTS.md §1）
 ```
 
 ローカルの `GITHUB_TOKEN` は任意です —— API レート制限を毎時 60 回から 5000 回へ引き上げます。

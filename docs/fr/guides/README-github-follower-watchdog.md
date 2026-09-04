@@ -40,6 +40,8 @@ Forkez-le et il devient **à vous** : le compte surveillé est déduit du propri
 3. Déclenchez une fois le workflow **Watch** via **Run workflow** — cette première exécution enregistre vos abonnés actuels comme référence et publie votre site Pages.
 4. Ouvrez `https://<vous>.github.io/github-follower-watchdog/` — ensuite, il se rafraîchit tout seul toutes les heures.
 
+Si cette première exécution échoue à l'étape *Configure Pages* — GitHub refuse parfois que le token du workflow crée le site — activez-le une fois via **Settings → Pages → Source : GitHub Actions** puis relancez le workflow.
+
 Pour surveiller n'importe quel autre compte public, définissez `WATCH_USER` dans `.github/workflows/watch.yml`.
 
 ## Comment ça marche
@@ -52,11 +54,11 @@ Pour surveiller n'importe quel autre compte public, définissez `WATCH_USER` dan
 ## Développement local
 
 ```bash
-pnpm -C site install   # une fois
-just watch             # une exécution du watchdog (cible : owner de origin, ou passez un login)
-just dev               # serveur de dev du site sur :5174
-just build             # vérification de types + build de production
-just lint-msg          # sujets de commits sur master..HEAD (AGENTS.md §1)
+npm --prefix site install   # une fois
+just watch                  # une exécution du watchdog (cible : owner de origin, ou passez un login)
+just dev                    # serveur de dev du site sur :5174
+just build                  # vérification de types + build de production
+just lint-msg               # sujets de commits sur master..HEAD (AGENTS.md §1)
 ```
 
 `GITHUB_TOKEN` est facultatif en local — il fait passer la limite d'appels API de 60 à 5000 par heure.

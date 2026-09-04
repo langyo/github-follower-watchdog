@@ -11,7 +11,7 @@
 
 ## Checklist / 自检清单
 <!-- Before requesting review / 请求复查前请确认 -->
-- [ ] `pnpm build` passes / 通过
+- [ ] `npm run build` passes / 通过
 - [ ] `just lint-msg` passes / 通过
 - [ ] i18n keys added for all 8 site locales if adding UI strings / 如有新增 UI 字符串，8 个语言包已同步
 - [ ] No hand-edits under `data/` — records are CI-owned / 未手工改动 `data/`（记录只由 CI 写入）

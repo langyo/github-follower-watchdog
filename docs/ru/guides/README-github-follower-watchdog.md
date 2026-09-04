@@ -40,6 +40,8 @@ GitHub Follower Watchdog — монитор подписчиков без сер
 3. Запустите workflow **Watch** один раз кнопкой **Run workflow** — первый прогон зафиксирует текущих подписчиков как базовую линию и опубликует ваш сайт на Pages.
 4. Откройте `https://<вы>.github.io/github-follower-watchdog/` — дальше он обновляется сам каждый час.
 
+Если первый прогон упадёт на шаге *Configure Pages* — GitHub иногда не даёт токену workflow создать сайт — включите его один раз через **Settings → Pages → Source: GitHub Actions** и запустите workflow ещё раз.
+
 Чтобы наблюдать за любым другим публичным аккаунтом, задайте `WATCH_USER` в `.github/workflows/watch.yml`.
 
 ## Как это устроено
@@ -52,11 +54,11 @@ GitHub Follower Watchdog — монитор подписчиков без сер
 ## Локальная разработка
 
 ```bash
-pnpm -C site install   # один раз
-just watch             # один прогон watchdog (цель: владелец origin, или передайте логин)
-just dev               # dev-сервер сайта на :5174
-just build             # проверка типов + production-сборка
-just lint-msg          # темы коммитов в master..HEAD (AGENTS.md §1)
+npm --prefix site install   # один раз
+just watch                  # один прогон watchdog (цель: владелец origin, или передайте логин)
+just dev                    # dev-сервер сайта на :5174
+just build                  # проверка типов + production-сборка
+just lint-msg               # темы коммитов в master..HEAD (AGENTS.md §1)
 ```
 
 `GITHUB_TOKEN` локально необязателен — он поднимает лимит API с 60 до 5000 запросов в час.

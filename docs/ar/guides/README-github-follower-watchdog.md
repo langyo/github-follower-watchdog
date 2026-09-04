@@ -40,6 +40,8 @@
 3. شغِّل الـ workflow المسمى **Watch** مرة واحدة عبر **Run workflow** — التشغيل الأول يسجِّل متابعيك الحاليين كخط أساس وينشر موقعك على Pages.
 4. افتح `https://<أنت>.github.io/github-follower-watchdog/` — بعدها يتحدّث من نفسه كل ساعة.
 
+إذا فشل التشغيل الأول عند خطوة *Configure Pages* — يرفض GitHub أحيًا أن ينشئ رمز الـ workflow الموقع — فعِّله مرة واحدة عبر **Settings → Pages → Source: GitHub Actions** ثم أعد تشغيل الـ workflow.
+
 لمراقبة أي حساب عام آخر، اضبط `WATCH_USER` في `.github/workflows/watch.yml`.
 
 ## كيف يعمل
@@ -52,11 +54,11 @@
 ## التطوير المحلي
 
 ```bash
-pnpm -C site install   # مرة واحدة
-just watch             # تشغيل واحد للـ watchdog (الهدف: مالك origin، أو مرِّر اسم مستخدم)
-just dev               # خادم تطوير الموقع على :5174
-just build             # فحص الأنواع + بناء الإنتاج
-just lint-msg          # فحص عناوين الـ commits في master..HEAD (AGENTS.md §1)
+npm --prefix site install   # مرة واحدة
+just watch                  # تشغيل واحد للـ watchdog (الهدف: مالك origin، أو مرِّر اسم مستخدم)
+just dev                    # خادم تطوير الموقع على :5174
+just build                  # فحص الأنواع + بناء الإنتاج
+just lint-msg               # فحص عناوين الـ commits في master..HEAD (AGENTS.md §1)
 ```
 
 ‏`GITHUB_TOKEN` اختياري محليًا — يرفع حد الـ API من 60 إلى 5000 طلب في الساعة.

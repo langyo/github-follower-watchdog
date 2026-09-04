@@ -40,6 +40,8 @@ Fork 하면 **당신의 것**이 됩니다: 감시 대상 계정은 저장소 ow
 3. **Run workflow** 로 **Watch** workflow를 한 번 실행합니다 —— 첫 실행이 현재 팔로워를 기준선으로 기록하고 Pages 사이트를 게시합니다.
 4. `https://<you>.github.io/github-follower-watchdog/` 를 엽니다 —— 이후 매시간 자동으로 새로고침됩니다.
 
+만약 첫 실행이 *Configure Pages* 단계에서 실패하면 —— GitHub 가 workflow 토큰의 사이트 생성을 거부하는 경우가 있습니다 —— **Settings → Pages → Source: GitHub Actions** 에서 한 번 활성화한 뒤 workflow를 다시 실행하세요.
+
 자신 이외의 공개 계정을 감시하려면 `.github/workflows/watch.yml`에서 `WATCH_USER`를 설정하세요.
 
 ## 동작 방식
@@ -52,11 +54,11 @@ Fork 하면 **당신의 것**이 됩니다: 감시 대상 계정은 저장소 ow
 ## 로컬 개발
 
 ```bash
-pnpm -C site install   # 최초 1회
-just watch             # watchdog 1회 실행(대상: origin owner, 또는 로그인명 전달)
-just dev               # 사이트 개발 서버 :5174
-just build             # 타입 검사 + 프로덕션 빌드
-just lint-msg          # master..HEAD 커밋 제목 검사(AGENTS.md §1)
+npm --prefix site install   # 최초 1회
+just watch                  # watchdog 1회 실행(대상: origin owner, 또는 로그인명 전달)
+just dev                    # 사이트 개발 서버 :5174
+just build                  # 타입 검사 + 프로덕션 빌드
+just lint-msg               # master..HEAD 커밋 제목 검사(AGENTS.md §1)
 ```
 
 로컬의 `GITHUB_TOKEN`은 선택 사항입니다 —— API 한도를 매시간 60회에서 5000회로 올려줍니다.

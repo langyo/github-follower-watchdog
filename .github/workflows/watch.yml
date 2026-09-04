@@ -60,18 +60,16 @@ jobs:
 
       # Build + deploy when the data changed, or on any push/dispatch run
       # (site or README edits need a redeploy even with clean data).
-      - name: Install pnpm
-        if: steps.changes.outputs.changed == 'true' || github.event_name != 'schedule'
-        uses: pnpm/action-setup@v6
-        # Version comes from the "packageManager" field in the root package.json.
-
+      # npm ships on the runner image — no toolchain download step (a
+      # pnpm/action-setup download was measured at 2m23s and once hung
+      # past the 5-minute cap, which the 1-minute budget cannot absorb).
       - name: Install Node
         if: steps.changes.outputs.changed == 'true' || github.event_name != 'schedule'
         uses: actions/setup-node@v7
         with:
           node-version: 22
-          cache: pnpm
-          cache-dependency-path: site/pnpm-lock.yaml
+          cache: npm
+          cache-dependency-path: site/package-lock.json
 
       - name: Build the site
         if: steps.changes.outputs.changed == 'true' || github.event_name != 'schedule'
@@ -79,13 +77,18 @@ jobs:
           # Project Pages serve from /<repo>/; a custom domain would use "/".
           SITE_BASE: /${{ github.event.repository.name }}/
         run: |
-          pnpm -C site install --frozen-lockfile
-          pnpm -C site build
+          npm ci --prefix site --ignore-scripts
+          npm run --prefix site build
 
       # enablement: true lets a fresh fork publish without touching
-      # Settings → Pages first.
+      # Settings → Pages first. continue-on-error: GitHub sometimes
+      # refuses to let GITHUB_TOKEN create the site ("Resource not
+      # accessible by integration") — then the deploy step below carries
+      # the failure, and the README Quick start documents the one-click
+      # Settings → Pages fallback.
       - name: Configure Pages
         if: steps.changes.outputs.changed == 'true' || github.event_name != 'schedule'
+        continue-on-error: true
         uses: actions/configure-pages@v6
         with:
           enablement: true

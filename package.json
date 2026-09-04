@@ -2,12 +2,11 @@
   "name": "github-follower-watchdog",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@11.22.0",
   "scripts": {
-    "dev": "pnpm -C site dev",
-    "build": "pnpm -C site build",
-    "preview": "pnpm -C site preview",
-    "typecheck": "pnpm -C site typecheck",
-    "clean": "pnpm -C site clean"
+    "dev": "npm --prefix site run dev",
+    "build": "npm --prefix site run build",
+    "preview": "npm --prefix site run preview",
+    "typecheck": "npm --prefix site run typecheck",
+    "clean": "npm --prefix site run clean"
   }
 }

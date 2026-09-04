@@ -1,5 +1,0 @@
-# pnpm settings home (single-package workspace). @parcel/watcher's native
-# build is optional (JS fallback covers dev & CI); skip it instead of
-# running postinstall scripts from the registry.
-allowBuilds:
-  '@parcel/watcher': false
