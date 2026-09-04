@@ -49,6 +49,17 @@ Fork 후 아래를 따르면 됩니다. 2분 정도 걸립니다.
 
 첫 실행이 *Configure Pages* 단계에서 멈춘다면 —— GitHub 가 workflow 토큰의 사이트 생성을 거부하는 경우가 있습니다 —— `https://github.com/<you>/github-follower-watchdog/settings/pages` 를 열어 **Source** 를 **GitHub Actions** 로 설정한 뒤 **Watch** 를 한 번 더 실행하세요.
 
+**점수를 더 빨리 채우기(선택이지만 권장).** Actions 의 `GITHUB_TOKEN` 은 자신의 토큰보다 한도가 빡빡하고, CI 는 매시간 `WATCH_ENRICH_CAP`(기본 40)개 계정만 수집합니다. 팔로워가 적으면 느린 워밍업일 뿐이지만, 천 명을 넘으면 모든 카드에 점수가 채워지기까지 수십 시간의 CI 가 스로틀된 백필 요청에 소모됩니다. 아무것도 활성화하기 전에 먼저 자기 컴퓨터에서 첫 패스를 돌리는 것을 권장합니다:
+
+```bash
+git clone https://github.com/<you>/github-follower-watchdog
+cd github-follower-watchdog && npm --prefix site install
+export GITHUB_TOKEN=$(gh auth token)   # 자신의 토큰: 매시간 5000회
+WATCH_ENRICH_CAP=200 just watch        # "no changes" 가 나올 때까지 반복
+```
+
+생성된 `data/` 기록을 브랜치에 커밋해 PR 을 열고 머지하면 —— 다음 매시간 실행이 그 파일을 받아들여 오래된 부분만 새로 고칩니다.
+
 **데이터의 위치.** `data/current.json` 은 최신 명단, `data/history.jsonl` 은 추가 전용 팔로우/언팔로우 로그, `data/accounts.json` 은 점수의 근거가 되는 계정 사실입니다. 셋 모두 CI 만 쓰고 fork 에 커밋됩니다 —— `git log -- data/` 가 완전한 감사 기록입니다. 외부 서비스도 데이터베이스도 없이 git 만 믿으면 됩니다.
 
 **다른 사람 감시하기.** `.github/workflows/watch.yml` 에서 `WATCH_USER` 를 설정하거나(로컬에서는 `just watch <로그인명>`), 공개 계정이면 누구든 감시할 수 있습니다.

@@ -78,13 +78,17 @@ jobs:
       # node_modules keyed on the lockfile: on a hit `npm install` below
       # degrades to a no-op verify (~5s) instead of `npm ci` re-extracting
       # all 130 packages (~40s) — that difference is what keeps the whole
-      # change path under a minute.
+      # change path under a minute. restore-keys lets a lockfile bump
+      # (dependabot) reuse the previous tree so `npm install` only pulls
+      # the delta instead of a cold `npm ci` (a cold registry stall once
+      # ate the entire 5-minute job budget).
       - name: Restore node_modules
         if: steps.changes.outputs.changed == 'true' || github.event_name != 'schedule'
         uses: actions/cache@v5
         with:
           path: site/node_modules
           key: nodemodules-${{ runner.os }}-${{ hashFiles('site/package-lock.json') }}
+          restore-keys: nodemodules-${{ runner.os }}-
 
       - name: Build the site
         if: steps.changes.outputs.changed == 'true' || github.event_name != 'schedule'

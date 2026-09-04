@@ -49,6 +49,17 @@ Tout ce qui suit prend environ deux minutes après le fork.
 
 Si la première exécution s'arrête à l'étape *Configure Pages* — GitHub refuse parfois que le token du workflow crée le site — ouvrez `https://github.com/<vous>/github-follower-watchdog/settings/pages`, réglez **Source → GitHub Actions**, et relancez **Watch**.
 
+**Remplir les scores plus vite (facultatif mais recommandé).** Le token des Actions vit sous des rate limits plus stricts que le vôtre, et la CI n'enrichit au plus que `WATCH_ENRICH_CAP` (défaut 40) comptes par exécution horaire. Avec une petite liste, c'est une simple montée en régime — avec un millier d'abonnés, cela signifie ~25 heures de runs CI qui broient des requêtes de backfill bridées avant que chaque carte porte un score. Faites la première passe sur votre propre machine, avant même d'activer quoi que ce soit :
+
+```bash
+git clone https://github.com/<vous>/github-follower-watchdog
+cd github-follower-watchdog && npm --prefix site install
+export GITHUB_TOKEN=$(gh auth token)   # votre propre token : 5000 req/heure
+WATCH_ENRICH_CAP=200 just watch        # relancez jusqu'à voir « no changes »
+```
+
+Commituez ensuite les relevés `data/` produits sur une branche, ouvrez une PR et fusionnez-la — la prochaine exécution horaire adopte le fichier et ne rafraîchit que ce qui a vieilli.
+
 **Où vivent les données.** `data/current.json` est la liste à jour, `data/history.jsonl` le journal en ajout seul des abonnements/désabonnements, et `data/accounts.json` les faits par compte derrière les scores. Tout trois sont écrits par la CI seule et committés dans votre fork — `git log -- data/` est la piste d'audit complète : aucun service externe, aucune base de données, rien d'autre à confiance que git.
 
 **Surveiller quelqu'un d'autre.** Définissez `WATCH_USER` dans `.github/workflows/watch.yml` (ou passez le compte en argument à `just watch <login>` localement) pour surveiller n'importe quel compte public à la place du vôtre.

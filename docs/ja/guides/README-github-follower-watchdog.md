@@ -49,6 +49,17 @@ Fork の後は以下の通りです。所要は 2 分ほどです。
 
 もし初回実行が *Configure Pages* で止まったら —— GitHub が workflow トークンによるサイト作成を拒むことがあります —— `https://github.com/<あなた>/github-follower-watchdog/settings/pages` を開いて **Source** を **GitHub Actions** に設定し、**Watch** をもう一度実行してください。
 
+**スコアを速く埋める（任意ですが推奨）。** Actions の `GITHUB_TOKEN` は自分のトークンより厳しいレート制限下にあり、CI は毎時 `WATCH_ENRICH_CAP`（既定 40）アカウントしか収集できません。フォロワーが少なければ穏やかなウォームアップですが、千人を超えると、スコアが全部埋まるまで何十時間もの CI がスロットルされたリクエストのバックフィルに費やされます。何も有効化する前に、まず自分のマシンで初回分を済ませるのがおすすめです：
+
+```bash
+git clone https://github.com/<あなた>/github-follower-watchdog
+cd github-follower-watchdog && npm --prefix site install
+export GITHUB_TOKEN=$(gh auth token)   # 自分のトークン: 毎時 5000 リクエスト
+WATCH_ENRICH_CAP=200 just watch        # "no changes" と出るまで繰り返す
+```
+
+生成された `data/` の記録をブランチにコミットして PR を出してマージすれば —— 次の毎時実行からそのファイルを取り込み、古くなった部分だけを更新します。
+
 **データの場所。** `data/current.json` が最新の名簿、`data/history.jsonl` が追記専用のフォロー／解除ログ、`data/accounts.json` がスコアの元になるアカウント事実です。すべて CI のみが書き込み、fork にコミットされます —— `git log -- data/` が完全な監査証跡です。外部サービスもデータベースもなく、信じるのは git だけです。
 
 **他人を監視する。** `.github/workflows/watch.yml` の `WATCH_USER` を設定するか（ローカルなら `just watch <ログイン名>`）、任意の公開アカウントを監視できます。

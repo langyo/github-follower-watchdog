@@ -121,7 +121,8 @@ tsc --noEmit）、`python -m py_compile scripts/*.py`（watchdog 改动，另需
   **禁止引入 `.vue` SFC——全程 `.tsx` + `.scss`**（用户约束，2026-09-04）。
 - Watchdog（纯 stdlib Python 3）：`python -m py_compile scripts/watchdog.py`；
   行为验证用 `just watch [login]`（写 `data/`，跑完 `git checkout -- data/`
-  还原，避免把本地数据带进 PR）。账号富集（评分事实）只在环境变量
+  还原，避免把本地数据带进 PR；刻意的资料回填 PR 除外，见 README
+  "Filling the scores faster"）。账号富集（评分事实）只在环境变量
   `GITHUB_TOKEN` 存在时运行。
 - Lint：`just lint-msg`（commit 标题，AGENTS.md §1）。
 - 新增 site UI 字符串必须同步补全 `site/src/messages/` 下全部 8 个语言包

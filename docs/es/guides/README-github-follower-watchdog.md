@@ -49,6 +49,17 @@ Todo lo que sigue lleva unos dos minutos tras el fork.
 
 Si la primera ejecución se detiene en el paso *Configure Pages* — GitHub a veces rechaza que el token del workflow cree el sitio — abre `https://github.com/<tú>/github-follower-watchdog/settings/pages`, pon **Source → GitHub Actions** y ejecuta **Watch** otra vez.
 
+**Llenar las puntuaciones más rápido (opcional pero recomendado).** El token de Actions vive bajo límites más estrictos que el tuyo, y la CI enriquece como máximo `WATCH_ENRICH_CAP` (por defecto 40) cuentas por ejecución horaria. Con una lista pequeña es un calentamiento suave — con un millar de seguidores son unas 25 horas de runs de CI moliendo peticiones de relleno estranguladas antes de que cada tarjeta lleve una puntuación. Haz la primera pasada en tu propia máquina, incluso antes de activar nada:
+
+```bash
+git clone https://github.com/<tú>/github-follower-watchdog
+cd github-follower-watchdog && npm --prefix site install
+export GITHUB_TOKEN=$(gh auth token)   # tu propio token: 5000 peticiones/hora
+WATCH_ENRICH_CAP=200 just watch        # repite hasta que diga «no changes»
+```
+
+Luego confirma los registros `data/` producidos en una rama, abre una PR y fusiónala — la siguiente ejecución horaria adopta el archivo y solo refresca lo que envejeció.
+
 **Dónde viven los datos.** `data/current.json` es la lista al día, `data/history.jsonl` el registro de solo adición de follows/unfollows, y `data/accounts.json` los hechos por cuenta tras las puntuaciones. Los tres los escribe solo la CI y se confirman en tu fork — `git log -- data/` es la pista de auditoría completa: sin servicios externos, sin base de datos, nada que creer más que git.
 
 **Vigilar a otro.** Define `WATCH_USER` en `.github/workflows/watch.yml` (o pasa la cuenta como argumento a `just watch <login>` en local) para vigilar cualquier cuenta pública en lugar de la tuya.
