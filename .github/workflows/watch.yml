@@ -93,7 +93,7 @@ jobs:
       # ate the entire 5-minute job budget).
       - name: Restore node_modules
         if: steps.changes.outputs.changed == 'true' || github.event_name != 'schedule'
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: site/node_modules
           key: nodemodules-${{ runner.os }}-${{ hashFiles('site/package-lock.json') }}
