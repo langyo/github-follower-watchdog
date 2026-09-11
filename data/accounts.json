@@ -4846,6 +4846,18 @@
         "bio",
         "location"
       ]
+    },
+    "John-0820": {
+      "checked_at": "2026-09-11T18:04:11Z",
+      "followers": 301,
+      "following": 740,
+      "public_repos": 80,
+      "created_at": "2026-03-09T23:59:52Z",
+      "contributions": 3440,
+      "profile_fields": [
+        "name",
+        "bio"
+      ]
     }
   }
 }
