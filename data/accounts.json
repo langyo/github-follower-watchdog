@@ -4905,6 +4905,18 @@
       "profile_fields": [
         "name"
       ]
+    },
+    "arpitrajjj": {
+      "checked_at": "2026-09-21T18:04:47Z",
+      "followers": 1232,
+      "following": 54227,
+      "public_repos": 9,
+      "created_at": "2026-07-26T03:43:56Z",
+      "contributions": 80,
+      "profile_fields": [
+        "name",
+        "location"
+      ]
     }
   }
 }
