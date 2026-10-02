@@ -6,7 +6,7 @@
     "name": "伊欧",
     "avatar_url": "https://avatars.githubusercontent.com/u/23103705?v=4"
   },
-  "updated_at": "2026-09-25T18:04:14Z",
+  "updated_at": "2026-10-02T18:04:58Z",
   "followers": [
     {
       "login": "00MattJKalasky",
@@ -533,6 +533,10 @@
       "id": 73098416
     },
     {
+      "login": "hokkadev",
+      "id": 23608082
+    },
+    {
       "login": "hongtianjun",
       "id": 17867649
     },
@@ -695,10 +699,6 @@
     {
       "login": "Konatalove",
       "id": 52121668
-    },
-    {
-      "login": "kotoyuuko",
-      "id": 19636601
     },
     {
       "login": "KristallWang",
@@ -923,10 +923,6 @@
     {
       "login": "nelix",
       "id": 33324
-    },
-    {
-      "login": "NeoxyCN",
-      "id": 23608082
     },
     {
       "login": "nerrons",
