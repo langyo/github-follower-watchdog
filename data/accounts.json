@@ -997,18 +997,17 @@
       ]
     },
     "Dark2932": {
-      "checked_at": "2026-09-04T07:56:55Z",
-      "followers": 28,
-      "following": 174,
-      "public_repos": 12,
+      "checked_at": "2026-10-06T18:04:48Z",
+      "followers": 31,
+      "following": 178,
+      "public_repos": 13,
       "created_at": "2020-10-05T16:20:18Z",
-      "contributions": null,
+      "contributions": 497,
       "profile_fields": [
         "name",
         "bio",
         "company",
-        "location",
-        "blog"
+        "location"
       ]
     },
     "DavideYang125": {
@@ -1090,8 +1089,8 @@
       "profile_fields": []
     },
     "diaryevil": {
-      "checked_at": "2026-09-04T07:56:56Z",
-      "followers": 6,
+      "checked_at": "2026-10-06T18:04:48Z",
+      "followers": 7,
       "following": 31,
       "public_repos": 10,
       "created_at": "2018-10-11T06:49:42Z",
@@ -1331,9 +1330,9 @@
       ]
     },
     "FSJohn": {
-      "checked_at": "2026-09-04T07:56:56Z",
-      "followers": 15,
-      "following": 51,
+      "checked_at": "2026-10-06T18:04:49Z",
+      "followers": 13,
+      "following": 53,
       "public_repos": 30,
       "created_at": "2016-02-19T07:44:23Z",
       "contributions": 0,
@@ -1687,12 +1686,12 @@
       ]
     },
     "Hxnxe": {
-      "checked_at": "2026-09-04T07:56:57Z",
+      "checked_at": "2026-10-06T18:04:48Z",
       "followers": 13,
       "following": 9,
       "public_repos": 29,
       "created_at": "2025-02-08T07:15:46Z",
-      "contributions": 895,
+      "contributions": 616,
       "profile_fields": [
         "name"
       ]
@@ -1789,8 +1788,8 @@
       ]
     },
     "IWaster": {
-      "checked_at": "2026-09-04T07:56:57Z",
-      "followers": 7,
+      "checked_at": "2026-10-06T18:04:48Z",
+      "followers": 8,
       "following": 14,
       "public_repos": 38,
       "created_at": "2017-03-27T13:34:01Z",
@@ -2046,12 +2045,12 @@
       ]
     },
     "Kevin28576": {
-      "checked_at": "2026-09-04T07:56:58Z",
-      "followers": 42,
-      "following": 22,
-      "public_repos": 65,
+      "checked_at": "2026-10-06T18:04:48Z",
+      "followers": 45,
+      "following": 23,
+      "public_repos": 66,
       "created_at": "2021-08-26T06:36:57Z",
-      "contributions": 267,
+      "contributions": 275,
       "profile_fields": [
         "name",
         "bio",
@@ -2726,12 +2725,12 @@
       "profile_fields": []
     },
     "mrytsr": {
-      "checked_at": "2026-09-04T08:02:18Z",
-      "followers": 123,
+      "checked_at": "2026-10-06T18:04:48Z",
+      "followers": 122,
       "following": 288,
-      "public_repos": 35,
+      "public_repos": 36,
       "created_at": "2012-06-17T14:50:40Z",
-      "contributions": 3,
+      "contributions": 12,
       "profile_fields": [
         "name",
         "bio",
@@ -2741,12 +2740,12 @@
       ]
     },
     "mzdluo123": {
-      "checked_at": "2026-09-04T08:02:18Z",
-      "followers": 436,
+      "checked_at": "2026-10-06T18:04:47Z",
+      "followers": 442,
       "following": 147,
-      "public_repos": 84,
+      "public_repos": 89,
       "created_at": "2016-10-30T04:12:18Z",
-      "contributions": 84,
+      "contributions": 95,
       "profile_fields": [
         "name",
         "bio",
@@ -2925,10 +2924,10 @@
       ]
     },
     "OkabeRintarou": {
-      "checked_at": "2026-09-04T08:02:19Z",
-      "followers": 27,
+      "checked_at": "2026-10-06T18:04:48Z",
+      "followers": 28,
       "following": 130,
-      "public_repos": 36,
+      "public_repos": 37,
       "created_at": "2014-01-03T13:19:32Z",
       "contributions": 221,
       "profile_fields": [
@@ -3204,12 +3203,12 @@
       ]
     },
     "Rickenbacker620": {
-      "checked_at": "2026-09-04T08:02:20Z",
+      "checked_at": "2026-10-06T18:04:48Z",
       "followers": 2,
       "following": 6,
       "public_repos": 34,
       "created_at": "2019-10-02T07:18:37Z",
-      "contributions": 113,
+      "contributions": 120,
       "profile_fields": []
     },
     "riiamu39": {
@@ -3378,10 +3377,10 @@
       ]
     },
     "SeppPenner": {
-      "checked_at": "2026-09-04T08:02:20Z",
-      "followers": 802,
-      "following": 4637,
-      "public_repos": 1252,
+      "checked_at": "2026-10-06T18:04:47Z",
+      "followers": 799,
+      "following": 4636,
+      "public_repos": 1253,
       "created_at": "2014-11-09T13:11:58Z",
       "contributions": 894,
       "profile_fields": [
@@ -3539,9 +3538,9 @@
       ]
     },
     "singerdmx": {
-      "checked_at": "2026-09-04T08:02:20Z",
-      "followers": 649,
-      "following": 17960,
+      "checked_at": "2026-10-06T18:04:48Z",
+      "followers": 652,
+      "following": 17958,
       "public_repos": 14,
       "created_at": "2009-09-03T19:17:48Z",
       "contributions": 0,
@@ -4025,8 +4024,8 @@
       ]
     },
     "TommyZJL": {
-      "checked_at": "2026-09-04T08:02:22Z",
-      "followers": 3,
+      "checked_at": "2026-10-06T18:04:48Z",
+      "followers": 4,
       "following": 16,
       "public_repos": 21,
       "created_at": "2015-06-18T20:16:58Z",
@@ -4210,12 +4209,12 @@
       ]
     },
     "voidarea97": {
-      "checked_at": "2026-09-04T08:02:22Z",
+      "checked_at": "2026-10-06T18:04:48Z",
       "followers": 6,
       "following": 21,
-      "public_repos": 7,
+      "public_repos": 6,
       "created_at": "2017-10-14T10:18:01Z",
-      "contributions": 5,
+      "contributions": 8,
       "profile_fields": []
     },
     "voidsuperman": {
@@ -4232,12 +4231,12 @@
       ]
     },
     "w4ctech": {
-      "checked_at": "2026-09-04T08:07:20Z",
-      "followers": 95,
+      "checked_at": "2026-10-06T18:04:48Z",
+      "followers": 97,
       "following": 1021,
       "public_repos": 17,
       "created_at": "2017-11-24T10:42:04Z",
-      "contributions": 367,
+      "contributions": 364,
       "profile_fields": [
         "name",
         "bio",
@@ -4257,12 +4256,12 @@
       ]
     },
     "wangtianrui": {
-      "checked_at": "2026-09-04T08:07:20Z",
-      "followers": 265,
-      "following": 311,
+      "checked_at": "2026-10-06T18:04:49Z",
+      "followers": 276,
+      "following": 313,
       "public_repos": 128,
       "created_at": "2016-10-10T14:17:29Z",
-      "contributions": 11,
+      "contributions": 16,
       "profile_fields": [
         "name",
         "blog"
@@ -4332,8 +4331,8 @@
       ]
     },
     "Westkest": {
-      "checked_at": "2026-09-04T08:07:20Z",
-      "followers": 22,
+      "checked_at": "2026-10-06T18:04:48Z",
+      "followers": 21,
       "following": 152,
       "public_repos": 7,
       "created_at": "2021-06-02T13:11:31Z",
@@ -4580,17 +4579,14 @@
       ]
     },
     "yushijinhun": {
-      "checked_at": "2026-09-04T08:07:21Z",
-      "followers": 407,
-      "following": 339,
-      "public_repos": 59,
+      "checked_at": "2026-10-06T18:04:48Z",
+      "followers": 409,
+      "following": 348,
+      "public_repos": 60,
       "created_at": "2014-08-06T09:53:23Z",
-      "contributions": 1312,
+      "contributions": 1192,
       "profile_fields": [
         "name",
-        "bio",
-        "company",
-        "location",
         "blog"
       ]
     },
@@ -4799,12 +4795,12 @@
       ]
     },
     "zuoxinyu": {
-      "checked_at": "2026-09-04T08:11:25Z",
+      "checked_at": "2026-10-06T18:04:47Z",
       "followers": 21,
       "following": 63,
-      "public_repos": 30,
+      "public_repos": 31,
       "created_at": "2014-10-22T05:00:09Z",
-      "contributions": 116,
+      "contributions": 129,
       "profile_fields": [
         "name",
         "bio",
