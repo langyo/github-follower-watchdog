@@ -2267,12 +2267,12 @@
       ]
     },
     "LehaoLin": {
-      "checked_at": "2026-09-04T07:56:58Z",
+      "checked_at": "2026-10-08T06:06:26Z",
       "followers": 59,
       "following": 187,
-      "public_repos": 80,
+      "public_repos": 81,
       "created_at": "2018-01-04T13:03:04Z",
-      "contributions": 171,
+      "contributions": 161,
       "profile_fields": [
         "name",
         "company",
@@ -2963,12 +2963,12 @@
       ]
     },
     "opsiff": {
-      "checked_at": "2026-09-04T08:02:19Z",
-      "followers": 115,
-      "following": 237,
+      "checked_at": "2026-10-08T06:06:26Z",
+      "followers": 118,
+      "following": 240,
       "public_repos": 76,
       "created_at": "2018-02-01T15:24:37Z",
-      "contributions": 1100,
+      "contributions": 1062,
       "profile_fields": [
         "name",
         "bio",
@@ -3953,12 +3953,12 @@
       ]
     },
     "TheRealKamisama": {
-      "checked_at": "2026-09-04T08:02:21Z",
-      "followers": 34,
-      "following": 41,
-      "public_repos": 31,
+      "checked_at": "2026-10-08T06:06:26Z",
+      "followers": 36,
+      "following": 42,
+      "public_repos": 37,
       "created_at": "2018-01-01T16:40:58Z",
-      "contributions": 0,
+      "contributions": 31,
       "profile_fields": [
         "bio",
         "location"
@@ -4118,12 +4118,12 @@
       ]
     },
     "uetcis": {
-      "checked_at": "2026-09-04T08:02:22Z",
-      "followers": 244,
+      "checked_at": "2026-10-08T06:06:26Z",
+      "followers": 247,
       "following": 264,
       "public_repos": 43,
       "created_at": "2017-02-09T04:16:05Z",
-      "contributions": 239,
+      "contributions": 228,
       "profile_fields": [
         "name",
         "bio",
