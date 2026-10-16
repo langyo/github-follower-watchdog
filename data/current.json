@@ -6,11 +6,15 @@
     "name": "伊欧",
     "avatar_url": "https://avatars.githubusercontent.com/u/23103705?v=4"
   },
-  "updated_at": "2026-10-16T00:08:09Z",
+  "updated_at": "2026-10-16T18:04:35Z",
   "followers": [
     {
       "login": "00MattJKalasky",
       "id": 178654504
+    },
+    {
+      "login": "0vm",
+      "id": 79897291
     },
     {
       "login": "0x00-pl",
