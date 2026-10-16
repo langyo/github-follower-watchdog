@@ -3428,9 +3428,9 @@
       ]
     },
     "Shafi200": {
-      "checked_at": "2026-09-04T08:02:20Z",
+      "checked_at": "2026-10-16T00:08:14Z",
       "followers": 3,
-      "following": 44,
+      "following": 43,
       "public_repos": 2,
       "created_at": "2021-07-09T21:13:51Z",
       "contributions": 0,
@@ -4754,12 +4754,12 @@
       ]
     },
     "zhudtq": {
-      "checked_at": "2026-09-04T08:11:25Z",
+      "checked_at": "2026-10-16T00:08:13Z",
       "followers": 2,
       "following": 10,
-      "public_repos": 14,
+      "public_repos": 15,
       "created_at": "2018-06-21T04:24:16Z",
-      "contributions": 1,
+      "contributions": 8,
       "profile_fields": [
         "name",
         "bio",
