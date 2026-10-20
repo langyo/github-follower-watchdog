@@ -6,7 +6,7 @@
     "name": "伊欧",
     "avatar_url": "https://avatars.githubusercontent.com/u/23103705?v=4"
   },
-  "updated_at": "2026-10-19T18:05:04Z",
+  "updated_at": "2026-10-20T00:09:29Z",
   "followers": [
     {
       "login": "00MattJKalasky",
@@ -1153,6 +1153,10 @@
       "id": 122956
     },
     {
+      "login": "Sirilit",
+      "id": 63301349
+    },
+    {
       "login": "SkipM4",
       "id": 40311581
     },
@@ -1179,10 +1183,6 @@
     {
       "login": "StarsX",
       "id": 11565995
-    },
-    {
-      "login": "Static-1248",
-      "id": 63301349
     },
     {
       "login": "StefansArya",
