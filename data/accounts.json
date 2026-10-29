@@ -1517,12 +1517,12 @@
       ]
     },
     "HeladoYoo": {
-      "checked_at": "2026-09-04T07:56:57Z",
+      "checked_at": "2026-10-29T06:04:56Z",
       "followers": 0,
       "following": 1,
-      "public_repos": 0,
+      "public_repos": 2,
       "created_at": "2018-08-27T12:11:15Z",
-      "contributions": 0,
+      "contributions": 13,
       "profile_fields": [
         "location",
         "blog"
@@ -3564,8 +3564,8 @@
       ]
     },
     "skyuzadv": {
-      "checked_at": "2026-09-04T08:02:21Z",
-      "followers": 9,
+      "checked_at": "2026-10-29T06:04:56Z",
+      "followers": 10,
       "following": 194,
       "public_repos": 4,
       "created_at": "2022-04-21T06:20:16Z",
