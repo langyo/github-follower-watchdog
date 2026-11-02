@@ -4936,13 +4936,15 @@
       ]
     },
     "hokkadev": {
-      "checked_at": "2026-10-02T18:04:58Z",
-      "followers": 13,
-      "following": 71,
+      "checked_at": "2026-11-02T00:06:47Z",
+      "followers": 14,
+      "following": 70,
       "public_repos": 0,
       "created_at": "2016-11-20T03:02:23Z",
       "contributions": 0,
-      "profile_fields": []
+      "profile_fields": [
+        "company"
+      ]
     },
     "WendyB1101": {
       "checked_at": "2026-10-09T18:04:40Z",
