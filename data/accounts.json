@@ -2558,7 +2558,7 @@
       "profile_fields": []
     },
     "mbautin": {
-      "checked_at": "2026-09-04T08:02:18Z",
+      "checked_at": "2026-11-03T12:03:46Z",
       "followers": 0,
       "following": 0,
       "public_repos": 155,
@@ -2566,8 +2566,6 @@
       "contributions": 0,
       "profile_fields": [
         "name",
-        "bio",
-        "company",
         "blog"
       ]
     },
