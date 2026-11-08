@@ -819,9 +819,9 @@
       ]
     },
     "Cosinhs": {
-      "checked_at": "2026-10-05T06:12:20Z",
+      "checked_at": "2026-11-08T06:03:31Z",
       "followers": 47,
-      "following": 208,
+      "following": 207,
       "public_repos": 36,
       "created_at": "2017-03-05T07:02:47Z",
       "contributions": 1,
@@ -2857,8 +2857,8 @@
       ]
     },
     "Ninja-mann": {
-      "checked_at": "2026-10-08T12:05:41Z",
-      "followers": 55,
+      "checked_at": "2026-11-08T06:03:31Z",
+      "followers": 53,
       "following": 396,
       "public_repos": 30,
       "created_at": "2021-10-31T07:19:21Z",
@@ -2999,8 +2999,8 @@
       ]
     },
     "Panellonepelatone": {
-      "checked_at": "2026-10-08T00:09:41Z",
-      "followers": 36,
+      "checked_at": "2026-11-08T06:03:31Z",
+      "followers": 34,
       "following": 515,
       "public_repos": 0,
       "created_at": "2023-10-13T23:23:17Z",
@@ -3287,12 +3287,12 @@
       ]
     },
     "Sallee1": {
-      "checked_at": "2026-10-05T18:05:05Z",
+      "checked_at": "2026-11-08T06:03:31Z",
       "followers": 2,
       "following": 4,
       "public_repos": 29,
       "created_at": "2022-02-10T08:44:24Z",
-      "contributions": 221,
+      "contributions": 199,
       "profile_fields": []
     },
     "Samboy1990": {
@@ -4418,12 +4418,12 @@
       ]
     },
     "xinsuinizhuan": {
-      "checked_at": "2026-10-09T00:10:31Z",
-      "followers": 57,
+      "checked_at": "2026-11-08T06:03:31Z",
+      "followers": 58,
       "following": 384,
-      "public_repos": 1143,
+      "public_repos": 1145,
       "created_at": "2018-06-29T02:00:34Z",
-      "contributions": 2,
+      "contributions": 1,
       "profile_fields": [
         "name",
         "bio"
