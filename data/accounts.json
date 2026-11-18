@@ -4993,17 +4993,18 @@
       ]
     },
     "tysoncung": {
-      "checked_at": "2026-10-19T12:06:15Z",
-      "followers": 764,
-      "following": 12131,
-      "public_repos": 462,
+      "checked_at": "2026-11-18T18:03:16Z",
+      "followers": 978,
+      "following": 15890,
+      "public_repos": 463,
       "created_at": "2018-11-27T05:19:29Z",
-      "contributions": 1598,
+      "contributions": 1503,
       "profile_fields": [
         "name",
         "bio",
         "company",
-        "location"
+        "location",
+        "blog"
       ]
     },
     "Sirilit": {
