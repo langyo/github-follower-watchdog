@@ -6,7 +6,7 @@
     "name": "伊欧",
     "avatar_url": "https://avatars.githubusercontent.com/u/23103705?v=4"
   },
-  "updated_at": "2026-11-25T06:04:03Z",
+  "updated_at": "2026-11-26T00:06:05Z",
   "followers": [
     {
       "login": "00MattJKalasky",
@@ -131,6 +131,10 @@
     {
       "login": "alexcui03",
       "id": 30141313
+    },
+    {
+      "login": "AlexsanderMX",
+      "id": 180661583
     },
     {
       "login": "Ameliance",
@@ -1399,10 +1403,6 @@
     {
       "login": "wenxinqiuhe",
       "id": 71088709
-    },
-    {
-      "login": "WesleyA0101",
-      "id": 180661583
     },
     {
       "login": "Westkest",
